@@ -63,19 +63,22 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
       }
 
       // Process the data to ensure it matches our JobApplication interface
-      const processedData = data.map(item => ({
-        ...item,
-        applicant: item.applicant && 
-                   typeof item.applicant === 'object' && 
-                   !('error' in item.applicant) &&
-                   'first_name' in item.applicant && 
-                   'last_name' in item.applicant
-                   ? {
-                       first_name: item.applicant.first_name,
-                       last_name: item.applicant.last_name
-                     }
-                   : null
-      }));
+      const processedData = data.map(item => {
+        // First check if applicant exists and is a valid object
+        const applicantData = item.applicant && 
+                            typeof item.applicant === 'object' && 
+                            !('error' in item.applicant)
+                            ? {
+                                first_name: item.applicant.first_name as string | null,
+                                last_name: item.applicant.last_name as string | null
+                              }
+                            : null;
+        
+        return {
+          ...item,
+          applicant: applicantData
+        };
+      });
 
       return processedData as JobApplication[];
     },
