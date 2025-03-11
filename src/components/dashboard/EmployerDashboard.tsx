@@ -63,23 +63,13 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
       }
 
       // Process the data to ensure it matches our JobApplication interface
-      const processedData = data.map(item => {
-        let applicantData = null;
-        
-        if (item.applicant && typeof item.applicant === 'object' && !('error' in item.applicant)) {
-          applicantData = {
-            first_name: item.applicant.first_name !== undefined ? item.applicant.first_name : null,
-            last_name: item.applicant.last_name !== undefined ? item.applicant.last_name : null
-          };
-        }
-        
-        return {
-          ...item,
-          applicant: applicantData
-        };
-      });
-
-      return processedData as JobApplication[];
+      return data.map(item => ({
+        ...item,
+        applicant: item.applicant ? {
+          first_name: item.applicant.first_name ?? null,
+          last_name: item.applicant.last_name ?? null
+        } : null
+      })) as JobApplication[];
     },
   });
 
@@ -216,7 +206,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Your Job Postings</h2>
             <Button
-              onClick={() => {
+              onClick={()={() => {
                 setSelectedJob(null);
                 setShowPostingForm(true);
               }}
@@ -249,11 +239,11 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
                 <JobListItem 
                   key={job.id} 
                   job={job} 
-                  onEdit={() => {
+                  onEdit={()={() => {
                     setSelectedJob(job);
                     setShowPostingForm(true);
                   }}
-                  onView={() => {
+                  onView={()={() => {
                     // View logic
                   }}
                 />
@@ -265,7 +255,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={() => setShowPostingForm(true)}
+                onClick={()={() => setShowPostingForm(true)}
               >
                 Post Your First Job
               </Button>
