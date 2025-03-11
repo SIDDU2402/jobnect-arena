@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, Users, BriefcaseBusiness, BarChart, Settings, Bell, Search, 
-  PlusCircle, User, LogOut, Mail, FileText
+  PlusCircle, User, LogOut, Mail, FileText, Briefcase, Bookmark
 } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 
