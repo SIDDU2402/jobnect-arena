@@ -15,6 +15,7 @@ type JobCardProps = {
   postedAt: string;
   logo?: string;
   featured?: boolean;
+  onApply?: () => void;
 };
 
 export const JobCard = ({
@@ -27,6 +28,7 @@ export const JobCard = ({
   postedAt,
   logo,
   featured,
+  onApply,
 }: JobCardProps) => {
   const [saved, setSaved] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -105,9 +107,13 @@ export const JobCard = ({
             </div>
             
             <div className="mt-5 pt-5 border-t border-border flex justify-end">
-              <Link to={`/jobs/${id}`}>
-                <Button>Apply Now</Button>
-              </Link>
+              {onApply ? (
+                <Button onClick={onApply}>Apply Now</Button>
+              ) : (
+                <Link to={`/jobs/${id}`}>
+                  <Button>View Details</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
