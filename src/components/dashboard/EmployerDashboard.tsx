@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,7 +62,18 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         throw error;
       }
 
-      return data as JobApplication[];
+      // Process the data to ensure it matches our JobApplication interface
+      const processedData = data.map(item => ({
+        ...item,
+        // If applicant is an error object or missing data, replace with null
+        applicant: typeof item.applicant === 'object' && 
+                   item.applicant !== null && 
+                   !('error' in item.applicant) 
+                   ? item.applicant 
+                   : null
+      }));
+
+      return processedData as JobApplication[];
     },
   });
 

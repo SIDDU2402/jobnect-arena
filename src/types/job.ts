@@ -26,7 +26,7 @@ export interface JobApplication {
   // Joined data
   job?: Job;
   applicant?: {
-    first_name: string;
-    last_name: string;
-  };
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
