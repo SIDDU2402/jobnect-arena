@@ -11,7 +11,7 @@ import {
   User, Clock, Info, CheckCircle, XCircle 
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import JobCard from "@/components/JobCard";
+import { JobCard } from "@/components/JobCard";
 import ApplyForm from "./ApplyForm";
 
 interface JobSeekerDashboardProps {

@@ -53,13 +53,23 @@ const JobPostingForm = ({ job, onClose, onSuccess }: JobPostingFormProps) => {
     setIsSubmitting(true);
     
     try {
+      const jobData = {
+        ...formData,
+        title: formData.title!,
+        company: formData.company!,
+        location: formData.location!,
+        salary: formData.salary!,
+        type: formData.type!,
+        description: formData.description!,
+        requirements: formData.requirements!,
+        status: formData.status || 'active',
+      };
+
       if (job) {
         // Update existing job
         const { error } = await supabase
           .from("jobs")
-          .update({
-            ...formData,
-          })
+          .update(jobData)
           .eq("id", job.id);
           
         if (error) throw error;
@@ -71,7 +81,7 @@ const JobPostingForm = ({ job, onClose, onSuccess }: JobPostingFormProps) => {
       } else {
         // Create new job
         const { error } = await supabase.from("jobs").insert({
-          ...formData,
+          ...jobData,
           employer_id: user.id,
         });
         
