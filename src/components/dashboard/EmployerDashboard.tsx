@@ -42,34 +42,54 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
     },
   });
 
+  // Updated application query to handle profiles separately
   const { data: applications, isLoading: applicationsLoading } = useQuery({
     queryKey: ["employer-applications"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch applications with job data
+      const { data: appData, error: appError } = await supabase
         .from("applications")
         .select(`
           *,
-          job:jobs(*),
-          applicant:profiles(first_name, last_name)
+          job:jobs(*)
         `)
         .order("created_at", { ascending: false });
 
-      if (error) {
+      if (appError) {
         toast({
           title: "Error loading applications",
-          description: error.message,
+          description: appError.message,
           variant: "destructive",
         });
-        throw error;
+        throw appError;
       }
 
-      // Process the data to ensure it matches our JobApplication interface
-      return data.map(item => ({
-        ...item,
-        applicant: item.applicant ? {
-          first_name: item.applicant.first_name ?? null,
-          last_name: item.applicant.last_name ?? null
-        } : null
+      // Now fetch all applicant profiles
+      const applicantIds = appData.map(app => app.applicant_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", applicantIds);
+
+      if (profilesError) {
+        toast({
+          title: "Error loading applicant profiles",
+          description: profilesError.message,
+          variant: "destructive",
+        });
+        // Don't throw here, we'll just use the application data without profiles
+      }
+
+      // Create a map of profiles by id for quick lookup
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, { id: string, first_name: string | null, last_name: string | null }>);
+
+      // Combine the data
+      return appData.map(app => ({
+        ...app,
+        applicant: profilesMap[app.applicant_id] || null
       })) as JobApplication[];
     },
   });

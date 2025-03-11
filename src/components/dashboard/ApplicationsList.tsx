@@ -26,23 +26,23 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold">
-                    {application.applicant?.first_name} {application.applicant?.last_name}
+                    {application.applicant?.first_name || 'Unnamed'} {application.applicant?.last_name || 'Applicant'}
                   </h3>
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[application.status]}`}>
-                    {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[application.status as keyof typeof statusColors] || statusColors.pending}`}>
+                    {application.status ? (application.status.charAt(0).toUpperCase() + application.status.slice(1)) : 'Pending'}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <Briefcase className="h-3.5 w-3.5" />
-                  <span>Applied for {application.job?.title}</span>
+                  <span>Applied for {application.job?.title || 'Unnamed Position'}</span>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <div className="bg-primary/10 px-3 py-1 rounded flex items-center gap-1">
                   <BarChart className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-medium">ATS Score: {application.ats_score}%</span>
+                  <span className="font-medium">ATS Score: {application.ats_score || 0}%</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}
