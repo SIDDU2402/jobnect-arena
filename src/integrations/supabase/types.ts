@@ -9,6 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      applications: {
+        Row: {
+          applicant_id: string
+          ats_score: number | null
+          cover_letter: string | null
+          created_at: string
+          id: string
+          job_id: string
+          resume_url: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          ats_score?: number | null
+          cover_letter?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          ats_score?: number | null
+          cover_letter?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          company: string
+          created_at: string
+          description: string
+          employer_id: string
+          id: string
+          location: string
+          requirements: string
+          salary: string
+          status: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          description: string
+          employer_id: string
+          id?: string
+          location: string
+          requirements: string
+          salary: string
+          status?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string
+          employer_id?: string
+          id?: string
+          location?: string
+          requirements?: string
+          salary?: string
+          status?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
