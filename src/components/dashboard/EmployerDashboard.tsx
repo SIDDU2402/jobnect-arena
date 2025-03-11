@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,7 +207,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Your Job Postings</h2>
             <Button
-              onClick={()={() => {
+              onClick={() => {
                 setSelectedJob(null);
                 setShowPostingForm(true);
               }}
@@ -239,11 +240,11 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
                 <JobListItem 
                   key={job.id} 
                   job={job} 
-                  onEdit={()={() => {
+                  onEdit={() => {
                     setSelectedJob(job);
                     setShowPostingForm(true);
                   }}
-                  onView={()={() => {
+                  onView={() => {
                     // View logic
                   }}
                 />
@@ -255,7 +256,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={()={() => setShowPostingForm(true)}
+                onClick={() => setShowPostingForm(true)}
               >
                 Post Your First Job
               </Button>
