@@ -12,15 +12,15 @@ interface JobListItemProps {
 
 const JobListItem = ({ job, onEdit, onView }: JobListItemProps) => {
   const statusColors = {
-    active: "bg-green-100 text-green-800",
-    draft: "bg-amber-100 text-amber-800",
-    closed: "bg-red-100 text-red-800",
+    active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    draft: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    closed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   };
 
-  const statusColor = statusColors[job.status] || statusColors.active;
+  const statusColor = statusColors[job.status as keyof typeof statusColors] || statusColors.active;
   
   return (
-    <div className="border border-border rounded-lg p-4 bg-background">
+    <div className="border border-border rounded-lg p-4 bg-background hover:bg-accent/5 transition-all duration-300">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1">
           <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">

@@ -1,3 +1,4 @@
+
 import { JobApplication } from "@/types/job";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, User, Briefcase, CheckCircle, XCircle, BarChart } from "lucide-react";
@@ -28,7 +29,7 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold">
                     {application.applicant?.first_name || 'Unnamed'} {application.applicant?.last_name || 'Applicant'}
                   </h3>
                   <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[application.status as keyof typeof statusColors] || statusColors.pending} transition-colors`}>
@@ -116,7 +117,12 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
                 </Button>
               )}
               
-              <Button size="sm" variant="outline" className="hover:bg-secondary/80 transition-colors">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="hover:bg-secondary/80 transition-colors"
+                onClick={() => window.open(`/resume/${application.id}`, '_blank')}
+              >
                 View Resume
               </Button>
             </div>
