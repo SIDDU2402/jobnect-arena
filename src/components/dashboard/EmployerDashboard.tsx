@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import JobPostingForm from "./JobPostingForm";
 import JobListItem from "./JobListItem";
 import ApplicationsList from "./ApplicationsList";
+import { Link, useNavigate } from "react-router-dom";
 
 interface EmployerDashboardProps {
   profile: any;
@@ -16,6 +17,7 @@ interface EmployerDashboardProps {
 
 const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showPostingForm, setShowPostingForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -124,16 +126,16 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
     },
   });
 
-  const handleApproveApplication = (applicationId: string) => {
-    updateApplicationMutation.mutate({ id: applicationId, status: "approved" });
-  };
-
-  const handleRejectApplication = (applicationId: string) => {
-    updateApplicationMutation.mutate({ id: applicationId, status: "rejected" });
-  };
-
   const handleUpdateApplicationStatus = (applicationId: string, status: 'pending' | 'reviewed' | 'rejected' | 'approved') => {
     updateApplicationMutation.mutate({ id: applicationId, status });
+  };
+
+  const handleViewJob = (jobId: string) => {
+    // In a real app, navigate to job details page
+    toast({
+      title: "View Job",
+      description: `Viewing job with ID: ${jobId}`,
+    });
   };
 
   return (
@@ -248,6 +250,12 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
                 setShowPostingForm(false);
                 setSelectedJob(null);
                 queryClient.invalidateQueries({ queryKey: ["employer-jobs"] });
+                toast({
+                  title: selectedJob ? "Job Updated" : "Job Posted",
+                  description: selectedJob 
+                    ? "Your job has been updated successfully." 
+                    : "Your job has been posted successfully.",
+                });
               }}
             />
           )}
@@ -264,9 +272,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
                     setSelectedJob(job);
                     setShowPostingForm(true);
                   }}
-                  onView={() => {
-                    // View logic
-                  }}
+                  onView={() => handleViewJob(job.id)}
                 />
               ))}
             </div>

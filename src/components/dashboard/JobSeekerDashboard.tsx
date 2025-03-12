@@ -6,6 +6,7 @@ import { Job, JobApplication } from "@/types/job";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   FileText, Briefcase, Bookmark, BarChart, 
   User, Clock, Info, CheckCircle, XCircle 
@@ -21,6 +22,7 @@ interface JobSeekerDashboardProps {
 const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'jobs' | 'applications'>('jobs');
   const [applyingToJob, setApplyingToJob] = useState<Job | null>(null);
@@ -148,6 +150,14 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     });
     
     setApplyingToJob(null);
+  };
+
+  const handleViewJobDetails = (applicationId: string) => {
+    // In a real app, navigate to application details page
+    toast({
+      title: "Application Details",
+      description: `Viewing application ${applicationId}`,
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -352,7 +362,11 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
                         <BarChart className="h-3.5 w-3.5" />
                         <span className="font-medium">ATS Score: {application.ats_score}%</span>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleViewJobDetails(application.id)}
+                      >
                         View Details
                       </Button>
                     </div>

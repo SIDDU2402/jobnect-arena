@@ -3,6 +3,8 @@ import { JobApplication } from "@/types/job";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, User, Briefcase, CheckCircle, XCircle, BarChart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ApplicationsListProps {
   applications: JobApplication[];
@@ -10,11 +12,22 @@ interface ApplicationsListProps {
 }
 
 const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProps) => {
+  const { toast } = useToast();
+  const [expandedApplicationId, setExpandedApplicationId] = useState<string | null>(null);
+  
   const statusColors = {
     pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200",
     reviewed: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200",
     rejected: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200",
     approved: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200",
+  };
+
+  const handleViewResume = (applicationId: string) => {
+    // In a real app, this would open the resume in a new tab or modal
+    toast({
+      title: "View Resume",
+      description: `Viewing resume for application ${applicationId}`,
+    });
   };
   
   return (
@@ -121,11 +134,29 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
                 size="sm" 
                 variant="outline" 
                 className="hover:bg-secondary/80 transition-colors"
-                onClick={() => window.open(`/resume/${application.id}`, '_blank')}
+                onClick={() => handleViewResume(application.id)}
               >
                 View Resume
               </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                className="hover:bg-secondary/80 transition-colors"
+                onClick={() => setExpandedApplicationId(expandedApplicationId === application.id ? null : application.id)}
+              >
+                {expandedApplicationId === application.id ? 'Hide Details' : 'Show Details'}
+              </Button>
             </div>
+            
+            {expandedApplicationId === application.id && (
+              <div className="mt-2 p-3 bg-secondary/20 rounded-md">
+                <h4 className="font-medium mb-2">Cover Letter</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {application.cover_letter || "No cover letter provided."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       ))}
