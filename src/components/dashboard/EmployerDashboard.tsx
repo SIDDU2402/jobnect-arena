@@ -7,6 +7,7 @@ import DashboardStats from "./stats/DashboardStats";
 import DashboardTabs from "./tabs/DashboardTabs";
 import JobListingsSection from "./jobs/JobListingsSection";
 import ApplicationsSection from "./applications/ApplicationsSection";
+import { Job, JobApplication } from "@/types/job";
 
 interface EmployerDashboardProps {
   profile: any;
@@ -34,7 +35,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         throw error;
       }
 
-      return data;
+      return data as Job[];
     },
   });
 
@@ -80,7 +81,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
       return appData.map(app => ({
         ...app,
         applicant: profilesMap[app.applicant_id] || null
-      }));
+      })) as JobApplication[];
     },
   });
 

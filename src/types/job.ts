@@ -10,7 +10,7 @@ export interface Job {
   description: string;
   requirements: string;
   created_at: string;
-  status: 'active' | 'closed' | 'draft';
+  status: 'active' | 'closed' | 'draft' | string;
 }
 
 export interface JobApplication {
@@ -19,8 +19,8 @@ export interface JobApplication {
   applicant_id: string;
   resume_url: string | null;
   cover_letter: string | null;
-  status: 'pending' | 'reviewed' | 'rejected' | 'approved';
-  ats_score: number;
+  status: 'pending' | 'reviewed' | 'rejected' | 'approved' | string;
+  ats_score: number | null;
   created_at: string;
   updated_at: string;
   // Joined data
