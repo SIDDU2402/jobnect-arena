@@ -2,14 +2,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Job, JobApplication } from "@/types/job";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, Users, BarChart, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import JobPostingForm from "./JobPostingForm";
-import JobListItem from "./JobListItem";
-import ApplicationsList from "./ApplicationsList";
-import { Link, useNavigate } from "react-router-dom";
+import DashboardStats from "./stats/DashboardStats";
+import DashboardTabs from "./tabs/DashboardTabs";
+import JobListingsSection from "./jobs/JobListingsSection";
+import ApplicationsSection from "./applications/ApplicationsSection";
 
 interface EmployerDashboardProps {
   profile: any;
@@ -17,10 +14,7 @@ interface EmployerDashboardProps {
 
 const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showPostingForm, setShowPostingForm] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [activeTab, setActiveTab] = useState<'listings' | 'applications'>('listings');
 
   const { data: jobs, isLoading: jobsLoading } = useQuery({
@@ -40,15 +34,13 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         throw error;
       }
 
-      return data as Job[];
+      return data;
     },
   });
 
-  // Updated application query to handle profiles separately
   const { data: applications, isLoading: applicationsLoading } = useQuery({
     queryKey: ["employer-applications"],
     queryFn: async () => {
-      // First fetch applications with job data
       const { data: appData, error: appError } = await supabase
         .from("applications")
         .select(`
@@ -66,7 +58,6 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         throw appError;
       }
 
-      // Now fetch all applicant profiles
       const applicantIds = appData.map(app => app.applicant_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -79,20 +70,17 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
           description: profilesError.message,
           variant: "destructive",
         });
-        // Don't throw here, we'll just use the application data without profiles
       }
 
-      // Create a map of profiles by id for quick lookup
       const profilesMap = (profilesData || []).reduce((acc, profile) => {
         acc[profile.id] = profile;
         return acc;
       }, {} as Record<string, { id: string, first_name: string | null, last_name: string | null }>);
 
-      // Combine the data
       return appData.map(app => ({
         ...app,
         applicant: profilesMap[app.applicant_id] || null
-      })) as JobApplication[];
+      }));
     },
   });
 
@@ -130,14 +118,6 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
     updateApplicationMutation.mutate({ id: applicationId, status });
   };
 
-  const handleViewJob = (jobId: string) => {
-    // In a real app, navigate to job details page
-    toast({
-      title: "View Job",
-      description: `Viewing job with ID: ${jobId}`,
-    });
-  };
-
   return (
     <div>
       <div className="mb-8">
@@ -145,171 +125,20 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         <p className="text-muted-foreground">Manage your job postings and applications.</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-background border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-muted-foreground">Active Jobs</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Briefcase className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold">
-            {jobs?.filter(job => job.status === 'active').length || 0}
-          </div>
-          <div className="text-xs text-muted-foreground">Total job postings</div>
-        </div>
-
-        <div className="bg-background border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-muted-foreground">Applications</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <FileText className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold">
-            {applications?.length || 0}
-          </div>
-          <div className="text-xs text-muted-foreground">Total applications received</div>
-        </div>
-
-        <div className="bg-background border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-muted-foreground">Pending Reviews</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold">
-            {applications?.filter(app => app.status === 'pending').length || 0}
-          </div>
-          <div className="text-xs text-muted-foreground">Applications to review</div>
-        </div>
-
-        <div className="bg-background border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-muted-foreground">Approved</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <BarChart className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold">
-            {applications?.filter(app => app.status === 'approved').length || 0}
-          </div>
-          <div className="text-xs text-muted-foreground">Candidates approved</div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-border mb-6">
-        <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'listings' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('listings')}
-        >
-          Job Listings
-        </button>
-        <button
-          className={`px-4 py-2 font-medium ${
-            activeTab === 'applications' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('applications')}
-        >
-          Applications
-        </button>
-      </div>
+      <DashboardStats jobs={jobs} applications={applications} />
+      
+      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'listings' && (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Job Postings</h2>
-            <Button
-              onClick={() => {
-                setSelectedJob(null);
-                setShowPostingForm(true);
-              }}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Post New Job
-            </Button>
-          </div>
-
-          {showPostingForm && (
-            <JobPostingForm
-              job={selectedJob}
-              onClose={() => {
-                setShowPostingForm(false);
-                setSelectedJob(null);
-              }}
-              onSuccess={() => {
-                setShowPostingForm(false);
-                setSelectedJob(null);
-                queryClient.invalidateQueries({ queryKey: ["employer-jobs"] });
-                toast({
-                  title: selectedJob ? "Job Updated" : "Job Posted",
-                  description: selectedJob 
-                    ? "Your job has been updated successfully." 
-                    : "Your job has been posted successfully.",
-                });
-              }}
-            />
-          )}
-
-          {jobsLoading ? (
-            <div className="text-center py-10">Loading job postings...</div>
-          ) : jobs && jobs.length > 0 ? (
-            <div className="space-y-4">
-              {jobs.map((job) => (
-                <JobListItem 
-                  key={job.id} 
-                  job={job} 
-                  onEdit={() => {
-                    setSelectedJob(job);
-                    setShowPostingForm(true);
-                  }}
-                  onView={() => handleViewJob(job.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10 border border-dashed border-border rounded-lg">
-              <p className="text-muted-foreground">You haven't posted any jobs yet.</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setShowPostingForm(true)}
-              >
-                Post Your First Job
-              </Button>
-            </div>
-          )}
-        </>
+        <JobListingsSection jobs={jobs} isLoading={jobsLoading} />
       )}
 
       {activeTab === 'applications' && (
-        <>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold">Applications Received</h2>
-          </div>
-
-          {applicationsLoading ? (
-            <div className="text-center py-10">Loading applications...</div>
-          ) : applications && applications.length > 0 ? (
-            <ApplicationsList 
-              applications={applications} 
-              onUpdateStatus={handleUpdateApplicationStatus} 
-            />
-          ) : (
-            <div className="text-center py-10 border border-dashed border-border rounded-lg">
-              <p className="text-muted-foreground">No applications received yet.</p>
-            </div>
-          )}
-        </>
+        <ApplicationsSection 
+          applications={applications}
+          isLoading={applicationsLoading}
+          onUpdateStatus={handleUpdateApplicationStatus}
+        />
       )}
     </div>
   );
