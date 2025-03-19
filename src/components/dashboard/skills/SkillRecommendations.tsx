@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { 
   findMissingSkills, 
   getCourseRecommendations,
-  extractSkills 
+  extractSkills,
+  calculateCosineSimilarity
 } from "@/utils/skillsAnalysis";
 import { 
   Card,
@@ -27,38 +28,43 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Job } from "@/types/job";
 
 interface SkillRecommendationsProps {
-  jobDescription: string;
+  jobDescription?: string;
   resumeText: string;
+  job?: Job;
 }
 
-const SkillRecommendations = ({ jobDescription, resumeText }: SkillRecommendationsProps) => {
+const SkillRecommendations = ({ jobDescription, resumeText, job }: SkillRecommendationsProps) => {
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [courseRecommendations, setCourseRecommendations] = useState<Record<string, string[]>>({});
   const [jobSkills, setJobSkills] = useState<string[]>([]);
   const [resumeSkills, setResumeSkills] = useState<string[]>([]);
   
   useEffect(() => {
-    if (jobDescription && resumeText) {
+    // Use job description from props or from job object
+    const description = jobDescription || (job ? `${job.description} ${job.requirements}` : '');
+    
+    if (description && resumeText) {
       // Extract skills from job description and resume
-      const extractedJobSkills = extractSkills(jobDescription);
+      const extractedJobSkills = extractSkills(description);
       const extractedResumeSkills = extractSkills(resumeText);
       
       setJobSkills(extractedJobSkills);
       setResumeSkills(extractedResumeSkills);
       
       // Find missing skills
-      const missing = findMissingSkills(jobDescription, resumeText);
+      const missing = findMissingSkills(description, resumeText);
       setMissingSkills(missing);
       
       // Get course recommendations for missing skills
       const recommendations = getCourseRecommendations(missing);
       setCourseRecommendations(recommendations);
     }
-  }, [jobDescription, resumeText]);
+  }, [jobDescription, resumeText, job]);
   
-  if (!jobDescription || !resumeText) {
+  if ((!jobDescription && !job) || !resumeText) {
     return (
       <Card className="mt-6">
         <CardHeader>
