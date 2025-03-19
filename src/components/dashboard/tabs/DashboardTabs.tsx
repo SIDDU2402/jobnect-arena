@@ -8,7 +8,7 @@ const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
   return (
     <div className="flex border-b border-border mb-6">
       <button
-        className={`px-4 py-2 font-medium ${
+        className={`px-4 py-2 font-medium transition-colors ${
           activeTab === 'listings' 
             ? 'text-primary border-b-2 border-primary' 
             : 'text-muted-foreground hover:text-foreground'
@@ -18,7 +18,7 @@ const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
         Job Listings
       </button>
       <button
-        className={`px-4 py-2 font-medium ${
+        className={`px-4 py-2 font-medium transition-colors ${
           activeTab === 'applications' 
             ? 'text-primary border-b-2 border-primary' 
             : 'text-muted-foreground hover:text-foreground'

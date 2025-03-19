@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link, useNavigate } from "react-router-dom";
 import { 
-  LayoutDashboard, Users, BriefcaseBusiness, BarChart, Settings, Bell, Search, 
-  PlusCircle, User, LogOut, Mail, FileText, Briefcase, Bookmark
+  LayoutDashboard, Briefcase, FileText, Bookmark,
+  Settings, Bell, Search, User, LogOut
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -93,37 +93,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   Saved Jobs
                 </Link>
               </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 h-10" asChild>
-                <Link to="/dashboard">
-                  <Mail className="h-4 w-4" />
-                  Messages
-                </Link>
-              </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" className="w-full justify-start gap-3 h-10" asChild>
                 <Link to="/dashboard">
-                  <BriefcaseBusiness className="h-4 w-4" />
+                  <Briefcase className="h-4 w-4" />
                   Job Listings
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-start gap-3 h-10" asChild>
                 <Link to="/dashboard">
-                  <Users className="h-4 w-4" />
-                  Candidates
-                </Link>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 h-10" asChild>
-                <Link to="/dashboard">
-                  <BarChart className="h-4 w-4" />
-                  Analytics
-                </Link>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 h-10" asChild>
-                <Link to="/dashboard">
-                  <Mail className="h-4 w-4" />
-                  Messages
+                  <FileText className="h-4 w-4" />
+                  Applications
                 </Link>
               </Button>
             </>
@@ -131,12 +113,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </nav>
         
         <div className="pt-2 border-t border-border space-y-1">
-          <Button variant="ghost" className="w-full justify-start gap-3 h-10 hover:bg-accent/50 transition-colors" asChild>
-            <Link to="/dashboard">
-              <Settings className="h-4 w-4" />
-              Settings
-            </Link>
-          </Button>
           <Button variant="ghost" className="w-full justify-start gap-3 h-10 hover:bg-accent/50 transition-colors" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
             Log out
@@ -179,16 +155,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground transition-colors" asChild>
-              <Link to="/dashboard">
-                <Bell className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground transition-colors" asChild>
-              <Link to="/dashboard">
-                <Mail className="h-5 w-5" />
-              </Link>
-            </Button>
             <Link to="/dashboard" className="flex items-center gap-2 ml-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
                 <User className="h-4 w-4 text-primary" />
