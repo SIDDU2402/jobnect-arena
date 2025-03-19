@@ -8,6 +8,7 @@ import DashboardTabs from "./tabs/DashboardTabs";
 import JobListingsSection from "./jobs/JobListingsSection";
 import ApplicationsSection from "./applications/ApplicationsSection";
 import { Job, JobApplication } from "@/types/job";
+import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
 
 interface EmployerDashboardProps {
   profile: any;
@@ -78,10 +79,33 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         return acc;
       }, {} as Record<string, { id: string, first_name: string | null, last_name: string | null }>);
 
-      return appData.map(app => ({
-        ...app,
-        applicant: profilesMap[app.applicant_id] || null
-      })) as JobApplication[];
+      // Enhance applications with similarity score
+      const enhancedApplications = appData.map(app => {
+        // Get job details to use for similarity calculation
+        const jobDetails = app.job;
+        const jobText = jobDetails ? `${jobDetails.title} ${jobDetails.description} ${jobDetails.requirements}` : '';
+        
+        // Mock resume text - in a real app this would come from parsing the resume
+        const mockResumeText = app.cover_letter || '';
+        
+        // Calculate similarity score if we have both job text and resume text
+        const similarityScore = (jobText && mockResumeText) 
+          ? Math.round(calculateCosineSimilarity(jobText, mockResumeText) * 100) 
+          : null;
+        
+        return {
+          ...app,
+          applicant: profilesMap[app.applicant_id] || null,
+          similarity_score: similarityScore
+        };
+      });
+
+      // Sort applications by a combined score of ATS and similarity
+      return enhancedApplications.sort((a, b) => {
+        const aTotal = (a.ats_score || 0) + (a.similarity_score || 0);
+        const bTotal = (b.ats_score || 0) + (b.similarity_score || 0);
+        return bTotal - aTotal;
+      }) as JobApplication[];
     },
   });
 

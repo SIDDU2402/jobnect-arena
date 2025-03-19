@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
+import SkillRecommendations from "./skills/SkillRecommendations";
 
 interface ApplyFormProps {
   job: Job;
@@ -15,6 +16,7 @@ interface ApplyFormProps {
 const ApplyForm = ({ job, onClose, onSubmit }: ApplyFormProps) => {
   const [coverLetter, setCoverLetter] = useState("");
   const [resume, setResume] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,6 +26,22 @@ const ApplyForm = ({ job, onClose, onSubmit }: ApplyFormProps) => {
     // In a real app, we would upload the resume here
     // For now, we just submit the cover letter
     onSubmit(coverLetter);
+  };
+
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setResume(file);
+      
+      // In a real app, we would parse the resume to extract text
+      // For demonstration, we'll use a mock parsed text
+      setResumeText(`
+        Experienced software developer with 5 years of experience in frontend development.
+        Proficient in JavaScript, HTML, CSS, and React.
+        Built responsive web applications and collaborated with cross-functional teams.
+        Bachelor's degree in Computer Science.
+      `);
+    }
   };
 
   return (
@@ -48,11 +66,7 @@ const ApplyForm = ({ job, onClose, onSubmit }: ApplyFormProps) => {
               <Input
                 id="resume"
                 type="file"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setResume(e.target.files[0]);
-                  }
-                }}
+                onChange={handleResumeUpload}
                 accept=".pdf,.doc,.docx"
                 className="cursor-pointer"
               />
@@ -60,6 +74,10 @@ const ApplyForm = ({ job, onClose, onSubmit }: ApplyFormProps) => {
                 Accepted formats: PDF, DOC, DOCX
               </p>
             </div>
+            
+            {resume && (
+              <SkillRecommendations job={job} resumeText={resumeText} />
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="coverLetter">Cover Letter</Label>
