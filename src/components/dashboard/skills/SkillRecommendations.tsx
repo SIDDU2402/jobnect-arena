@@ -1,103 +1,165 @@
 
-import { useState } from "react";
-import { Job } from "@/types/job";
+import { useState, useEffect } from "react";
+import { 
+  findMissingSkills, 
+  getCourseRecommendations,
+  extractSkills 
+} from "@/utils/skillsAnalysis";
+import { 
+  Card,
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { 
+  BookOpen, 
+  ChevronRight, 
+  Lightbulb, 
+  ListChecks, 
+  School 
+} from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { extractJobSkills, analyzeMissingSkills, generateCourseRecommendations } from "@/utils/skillsAnalysis";
-import { BookOpen, ExternalLink } from "lucide-react";
 
 interface SkillRecommendationsProps {
-  job: Job;
-  resumeText?: string;
+  jobDescription: string;
+  resumeText: string;
 }
 
-const SkillRecommendations = ({ job, resumeText = "" }: SkillRecommendationsProps) => {
-  const [showRecommendations, setShowRecommendations] = useState(false);
+const SkillRecommendations = ({ jobDescription, resumeText }: SkillRecommendationsProps) => {
+  const [missingSkills, setMissingSkills] = useState<string[]>([]);
+  const [courseRecommendations, setCourseRecommendations] = useState<Record<string, string[]>>({});
+  const [jobSkills, setJobSkills] = useState<string[]>([]);
+  const [resumeSkills, setResumeSkills] = useState<string[]>([]);
   
-  // Extract required skills from job
-  const requiredSkills = extractJobSkills(job);
+  useEffect(() => {
+    if (jobDescription && resumeText) {
+      // Extract skills from job description and resume
+      const extractedJobSkills = extractSkills(jobDescription);
+      const extractedResumeSkills = extractSkills(resumeText);
+      
+      setJobSkills(extractedJobSkills);
+      setResumeSkills(extractedResumeSkills);
+      
+      // Find missing skills
+      const missing = findMissingSkills(jobDescription, resumeText);
+      setMissingSkills(missing);
+      
+      // Get course recommendations for missing skills
+      const recommendations = getCourseRecommendations(missing);
+      setCourseRecommendations(recommendations);
+    }
+  }, [jobDescription, resumeText]);
   
-  // For simplicity, we're using a mock resume text if none is provided
-  const mockResumeText = resumeText || `
-    Experienced software developer with 5 years of experience in frontend development.
-    Proficient in JavaScript, HTML, CSS, and React.
-    Built responsive web applications and collaborated with cross-functional teams.
-    Bachelor's degree in Computer Science.
-  `;
-  
-  // Analyze missing skills
-  const missingSkills = analyzeMissingSkills(mockResumeText, requiredSkills);
-  
-  // Generate course recommendations
-  const courseRecommendations = generateCourseRecommendations(missingSkills);
+  if (!jobDescription || !resumeText) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Skills Analysis</CardTitle>
+          <CardDescription>
+            Enter job details and upload your resume to get skill recommendations
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
   
   return (
-    <Card className="p-4 mt-4 bg-secondary/10">
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-lg flex items-center">
-            <BookOpen className="mr-2 h-5 w-5 text-primary" />
-            Skills Analysis
-          </h3>
-          {missingSkills.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowRecommendations(!showRecommendations)}
-            >
-              {showRecommendations ? "Hide Recommendations" : "Show Recommendations"}
-            </Button>
-          )}
-        </div>
-        
-        <div className="mb-3">
-          <p className="text-sm text-muted-foreground mb-2">Required Skills:</p>
-          <div className="flex flex-wrap gap-2">
-            {requiredSkills.map((skill) => (
-              <Badge 
-                key={skill} 
-                variant={missingSkills.includes(skill) ? "destructive" : "default"}
-                className="capitalize"
-              >
-                {skill}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        
-        {missingSkills.length > 0 && (
-          <div className="mb-3">
-            <p className="text-sm text-muted-foreground mb-2">Missing Skills:</p>
+    <Card className="mt-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Lightbulb className="h-5 w-5 text-primary" />
+          Skills Gap Analysis
+        </CardTitle>
+        <CardDescription>
+          We analyzed the job requirements and your resume to identify skill gaps
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <h4 className="text-sm font-medium mb-2 flex items-center">
+              <ListChecks className="h-4 w-4 mr-1.5 text-primary" />
+              Job Required Skills
+            </h4>
             <div className="flex flex-wrap gap-2">
-              {missingSkills.map((skill) => (
-                <Badge key={skill} variant="destructive" className="capitalize">
-                  {skill}
-                </Badge>
-              ))}
+              {jobSkills.length > 0 ? (
+                jobSkills.map((skill) => (
+                  <Badge 
+                    key={skill} 
+                    variant="secondary"
+                    className={
+                      resumeSkills.includes(skill) 
+                        ? "bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:text-green-800"
+                        : "bg-red-500/10 text-red-700 hover:bg-red-500/20 hover:text-red-800"
+                    }
+                  >
+                    {skill}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No specific skills detected in job description</p>
+              )}
             </div>
           </div>
-        )}
+          
+          <div>
+            <h4 className="text-sm font-medium mb-2 flex items-center">
+              <ListChecks className="h-4 w-4 mr-1.5 text-primary" />
+              Your Skills
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {resumeSkills.length > 0 ? (
+                resumeSkills.map((skill) => (
+                  <Badge key={skill} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No specific skills detected in your resume</p>
+              )}
+            </div>
+          </div>
+        </div>
         
-        {showRecommendations && missingSkills.length > 0 && (
-          <div className="mt-4">
-            <h4 className="font-medium mb-3">Recommended Courses to Learn Missing Skills:</h4>
+        {missingSkills.length > 0 ? (
+          <>
+            <h4 className="text-sm font-medium mb-3 flex items-center border-t pt-4">
+              <School className="h-4 w-4 mr-1.5 text-primary" />
+              Course Recommendations for Missing Skills
+            </h4>
+            
             <Accordion type="single" collapsible className="w-full">
-              {Object.entries(courseRecommendations).map(([skill, courses]) => (
+              {missingSkills.map((skill) => (
                 <AccordionItem key={skill} value={skill}>
-                  <AccordionTrigger className="capitalize">{skill}</AccordionTrigger>
+                  <AccordionTrigger className="text-sm hover:no-underline">
+                    <span className="flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2 text-primary" />
+                      <span>Courses for <span className="font-semibold">{skill}</span></span>
+                    </span>
+                  </AccordionTrigger>
                   <AccordionContent>
-                    <ul className="pl-2 space-y-2">
-                      {courses.map((course, index) => (
-                        <li key={index} className="flex items-center">
-                          <ExternalLink className="h-3.5 w-3.5 mr-2 text-primary" />
-                          <span className="text-sm">{course}</span>
+                    <ul className="space-y-2 pl-6 mt-2">
+                      {courseRecommendations[skill]?.map((course, index) => (
+                        <li key={index} className="text-sm flex items-center group">
+                          <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground" />
+                          <span>{course}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => window.open(`https://www.coursera.org/search?query=${encodeURIComponent(course)}`, '_blank')}
+                          >
+                            View
+                          </Button>
                         </li>
                       ))}
                     </ul>
@@ -105,15 +167,15 @@ const SkillRecommendations = ({ job, resumeText = "" }: SkillRecommendationsProp
                 </AccordionItem>
               ))}
             </Accordion>
+          </>
+        ) : (
+          <div className="text-center py-4 border-t">
+            <p className="text-green-600 dark:text-green-400 font-medium">
+              Great job! Your skills match the job requirements.
+            </p>
           </div>
         )}
-        
-        {missingSkills.length === 0 && (
-          <div className="text-sm p-3 bg-green-50 text-green-700 rounded-md dark:bg-green-900 dark:text-green-100">
-            Great job! Your resume already covers all the skills required for this position.
-          </div>
-        )}
-      </div>
+      </CardContent>
     </Card>
   );
 };

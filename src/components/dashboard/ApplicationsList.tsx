@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { JobApplication } from "@/types/job";
 import { formatDistanceToNow } from "date-fns";
@@ -31,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApplicationsListProps {
   applications: JobApplication[];
@@ -41,6 +41,7 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
   const { toast } = useToast();
   const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<'score' | 'date'>('score');
+  const [downloadingResumeId, setDownloadingResumeId] = useState<string | null>(null);
 
   const toggleApplicationDetails = (applicationId: string) => {
     setExpandedApplication(expandedApplication === applicationId ? null : applicationId);
@@ -72,8 +73,10 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
     }
   };
 
-  const handleDownloadResume = (url: string | null) => {
-    if (!url) {
+  const handleDownloadResume = async (application: JobApplication) => {
+    const resumeUrl = application.resume_url;
+    
+    if (!resumeUrl) {
       toast({
         title: "No resume available",
         description: "This applicant did not upload a resume.",
@@ -82,7 +85,55 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
       return;
     }
     
-    window.open(url, '_blank');
+    try {
+      setDownloadingResumeId(application.id);
+      
+      // Extract the path from the URL if it's a full URL
+      const path = resumeUrl.includes('storage/v1/object/public/') 
+        ? resumeUrl.split('storage/v1/object/public/')[1]
+        : resumeUrl;
+      
+      // If it's already a full URL, just open it
+      if (resumeUrl.startsWith('http')) {
+        window.open(resumeUrl, '_blank');
+        setDownloadingResumeId(null);
+        return;
+      }
+      
+      // Otherwise, try to download from Supabase
+      const { data, error } = await supabase.storage
+        .from('resumes')
+        .download(path);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Create a download link
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      // Extract filename from path or use a default
+      const filename = path.split('/').pop() || `resume-${application.id}.pdf`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast({
+        title: "Resume downloaded",
+        description: "The resume has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      console.error("Error downloading resume:", error);
+      toast({
+        title: "Error downloading resume",
+        description: error.message || "There was an error downloading the resume.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingResumeId(null);
+    }
   };
 
   // Sort applications based on current sort option
@@ -233,9 +284,14 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleDownloadResume(application.resume_url)}
+                        onClick={() => handleDownloadResume(application)}
+                        disabled={downloadingResumeId === application.id}
                       >
-                        <Download className="h-4 w-4 mr-1.5" />
+                        {downloadingResumeId === application.id ? (
+                          <Clock className="h-4 w-4 mr-1.5 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-1.5" />
+                        )}
                         Download
                       </Button>
                     )}
@@ -246,14 +302,19 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center text-sm text-muted-foreground">
                           <FileText className="h-10 w-10 mx-auto mb-2 text-primary/60" />
-                          <p>Resume preview not available</p>
+                          <p>Resume available for download</p>
                           <Button 
                             variant="outline" 
                             size="sm" 
                             className="mt-2"
-                            onClick={() => handleDownloadResume(application.resume_url)}
+                            onClick={() => handleDownloadResume(application)}
+                            disabled={downloadingResumeId === application.id}
                           >
-                            <Download className="h-3.5 w-3.5 mr-1.5" />
+                            {downloadingResumeId === application.id ? (
+                              <Clock className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            ) : (
+                              <Download className="h-3.5 w-3.5 mr-1.5" />
+                            )}
                             Download Resume
                           </Button>
                         </div>

@@ -1,138 +1,99 @@
 
-import { Job } from "@/types/job";
-
-// Extract skills from job description and requirements
-export const extractJobSkills = (job: Job): string[] => {
-  const combinedText = `${job.description} ${job.requirements}`.toLowerCase();
-  
-  // Common technical skills to look for (simplified version)
-  const commonSkills = [
-    "javascript", "typescript", "react", "angular", "vue", "node.js", "python", 
-    "java", "c#", ".net", "php", "ruby", "golang", "rust", "swift", "kotlin",
-    "sql", "nosql", "mongodb", "postgresql", "mysql", "oracle", "aws", "azure", 
-    "gcp", "docker", "kubernetes", "devops", "ci/cd", "git", "agile", "scrum",
-    "machine learning", "ai", "data science", "blockchain", "ui/ux", "figma",
-    "adobe xd", "sketch", "html", "css", "sass", "less", "responsive design",
-    "mobile development", "android", "ios", "flutter", "react native"
-  ];
-  
-  return commonSkills.filter(skill => combinedText.includes(skill));
+// Function to tokenize text into words
+const tokenize = (text: string): string[] => {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 1);
 };
 
-// Mock function to analyze resume and return missing skills
-// In a real app, this would use NLP or be connected to an AI service
-export const analyzeMissingSkills = (resumeText: string, requiredSkills: string[]): string[] => {
-  const lowerCaseResume = resumeText.toLowerCase();
-  return requiredSkills.filter(skill => !lowerCaseResume.includes(skill));
-};
-
-// Generate course recommendations for missing skills
-export const generateCourseRecommendations = (missingSkills: string[]): Record<string, string[]> => {
-  const courseRecommendations: Record<string, string[]> = {};
+// Calculate term frequency
+const calculateTF = (text: string): Record<string, number> => {
+  const tokens = tokenize(text);
+  const termFreq: Record<string, number> = {};
   
-  // Mock course recommendations
-  const coursesBySkill: Record<string, string[]> = {
-    "javascript": [
-      "JavaScript Fundamentals by Codecademy",
-      "JavaScript: Understanding the Weird Parts on Udemy",
-      "Modern JavaScript From The Beginning by Brad Traversy"
-    ],
-    "typescript": [
-      "TypeScript Essential Training on LinkedIn Learning",
-      "Understanding TypeScript by Maximilian Schwarzmüller",
-      "TypeScript: The Complete Developer's Guide by Stephen Grider"
-    ],
-    "react": [
-      "React - The Complete Guide by Academind",
-      "Epic React by Kent C. Dodds",
-      "React for Beginners by Wes Bos"
-    ],
-    "python": [
-      "Python for Everybody by University of Michigan (Coursera)",
-      "Complete Python Developer in 2023 by Andrei Neagoie",
-      "Python Crash Course by Eric Matthes (Book)"
-    ],
-    "node.js": [
-      "Node.js, Express, MongoDB & More: The Complete Bootcamp by Jonas Schmedtmann",
-      "Learn and Understand NodeJS by Anthony Alicea",
-      "NodeJS - The Complete Guide by Maximilian Schwarzmüller"
-    ],
-    "sql": [
-      "The Complete SQL Bootcamp by Jose Portilla",
-      "Introduction to SQL by Khan Academy",
-      "SQL for Data Analysis by Udacity"
-    ],
-    "aws": [
-      "AWS Certified Solutions Architect Associate by A Cloud Guru",
-      "AWS Certified Developer Associate by Stephane Maarek",
-      "AWS Fundamentals: Going Cloud-Native on Coursera"
-    ],
-    "machine learning": [
-      "Machine Learning by Andrew Ng (Coursera)",
-      "Machine Learning A-Z by Kirill Eremenko",
-      "Fast.ai Practical Deep Learning for Coders"
-    ]
-  };
-  
-  missingSkills.forEach(skill => {
-    if (coursesBySkill[skill]) {
-      courseRecommendations[skill] = coursesBySkill[skill];
-    } else {
-      courseRecommendations[skill] = [
-        `${skill.charAt(0).toUpperCase() + skill.slice(1)} Essential Training on LinkedIn Learning`,
-        `Complete ${skill.charAt(0).toUpperCase() + skill.slice(1)} Course on Udemy`,
-        `${skill.charAt(0).toUpperCase() + skill.slice(1)} Fundamentals on Pluralsight`
-      ];
-    }
+  tokens.forEach(token => {
+    termFreq[token] = (termFreq[token] || 0) + 1;
   });
   
-  return courseRecommendations;
+  return termFreq;
 };
 
-// Cosine similarity calculation between job requirements and resume
-export const calculateCosineSimilarity = (jobText: string, resumeText: string): number => {
-  // Function to count word frequencies in a text
-  const getWordFrequencies = (text: string): Record<string, number> => {
-    const words = text.toLowerCase().match(/\b\w+\b/g) || [];
-    const frequencies: Record<string, number> = {};
-    
-    words.forEach(word => {
-      frequencies[word] = (frequencies[word] || 0) + 1;
-    });
-    
-    return frequencies;
-  };
+// Calculate cosine similarity between two texts
+export const calculateCosineSimilarity = (text1: string, text2: string): number => {
+  if (!text1 || !text2) return 0;
   
-  // Get word frequencies for both texts
-  const jobFreq = getWordFrequencies(jobText);
-  const resumeFreq = getWordFrequencies(resumeText);
+  const tf1 = calculateTF(text1);
+  const tf2 = calculateTF(text2);
   
-  // Get unique words from both texts
-  const uniqueWords = new Set([...Object.keys(jobFreq), ...Object.keys(resumeFreq)]);
+  // Get all unique terms
+  const allTerms = new Set([...Object.keys(tf1), ...Object.keys(tf2)]);
   
   // Calculate dot product
   let dotProduct = 0;
-  let jobMagnitude = 0;
-  let resumeMagnitude = 0;
+  let magnitude1 = 0;
+  let magnitude2 = 0;
   
-  uniqueWords.forEach(word => {
-    const jobValue = jobFreq[word] || 0;
-    const resumeValue = resumeFreq[word] || 0;
+  allTerms.forEach(term => {
+    const value1 = tf1[term] || 0;
+    const value2 = tf2[term] || 0;
     
-    dotProduct += jobValue * resumeValue;
-    jobMagnitude += jobValue * jobValue;
-    resumeMagnitude += resumeValue * resumeValue;
+    dotProduct += value1 * value2;
+    magnitude1 += value1 * value1;
+    magnitude2 += value2 * value2;
   });
   
-  // Calculate magnitudes
-  jobMagnitude = Math.sqrt(jobMagnitude);
-  resumeMagnitude = Math.sqrt(resumeMagnitude);
+  if (magnitude1 === 0 || magnitude2 === 0) return 0;
   
-  // Avoid division by zero
-  if (jobMagnitude === 0 || resumeMagnitude === 0) {
-    return 0;
-  }
+  return dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
+};
+
+// Extract skills from text using a simple keyword approach
+export const extractSkills = (text: string): string[] => {
+  // Common tech and professional skills
+  const skillKeywords = [
+    "javascript", "typescript", "html", "css", "react", "vue", "angular", 
+    "node", "express", "mongodb", "sql", "postgresql", "mysql", "graphql",
+    "rest", "api", "aws", "azure", "gcp", "docker", "kubernetes", "python",
+    "django", "flask", "ruby", "rails", "php", "laravel", "java", "spring",
+    "c#", ".net", "scala", "swift", "kotlin", "flutter", "dart", "mobile",
+    "android", "ios", "react native", "design", "figma", "sketch", "adobe",
+    "photoshop", "illustrator", "xd", "ui", "ux", "frontend", "backend",
+    "fullstack", "devops", "cicd", "git", "github", "gitlab", "product",
+    "agile", "scrum", "kanban", "marketing", "seo", "analytics", "data",
+    "science", "machine learning", "ai", "blockchain", "crypto", "leadership",
+    "management", "communication", "teamwork", "problem solving", "critical thinking"
+  ];
   
-  // Return cosine similarity
-  return dotProduct / (jobMagnitude * resumeMagnitude);
+  const textLower = text.toLowerCase();
+  const foundSkills = skillKeywords.filter(skill => textLower.includes(skill));
+  
+  return [...new Set(foundSkills)]; // Remove duplicates
+};
+
+// Compare job skills to resume skills and find missing skills
+export const findMissingSkills = (jobDescription: string, resumeText: string): string[] => {
+  const jobSkills = extractSkills(jobDescription);
+  const resumeSkills = extractSkills(resumeText);
+  
+  // Find skills in job description that are not in resume
+  return jobSkills.filter(skill => !resumeSkills.includes(skill));
+};
+
+// Get course recommendations for missing skills
+export const getCourseRecommendations = (missingSkills: string[]): Record<string, string[]> => {
+  const recommendations: Record<string, string[]> = {};
+  
+  missingSkills.forEach(skill => {
+    // This is a mock function - in a real application, this would connect to a course API
+    // or database to find relevant courses for each skill
+    recommendations[skill] = [
+      `Mastering ${skill} - Comprehensive Course`,
+      `${skill} for Beginners`,
+      `Advanced ${skill} Techniques`
+    ];
+  });
+  
+  return recommendations;
 };

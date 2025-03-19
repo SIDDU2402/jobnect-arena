@@ -86,19 +86,23 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         const jobDetails = app.job;
         const jobText = jobDetails ? `${jobDetails.title} ${jobDetails.description} ${jobDetails.requirements}` : '';
         
-        // Use cover letter as resume text for similarity calculation
-        // In a real app, you would parse the actual resume file
+        // For fairness, only calculate similarity if there's a cover letter
+        // Don't calculate similarity on non-existent resumes
         const resumeText = app.cover_letter || '';
         
         // Calculate similarity score if we have both job text and resume text
         const similarityScore = (jobText && resumeText) 
           ? Math.round(calculateCosineSimilarity(jobText, resumeText) * 100) 
-          : null;
+          : 0;
+        
+        // Ensure ATS score is properly handled - set to 0 if null
+        const atsScore = app.ats_score || 0;
         
         return {
           ...app,
           applicant: profilesMap[app.applicant_id] || null,
-          similarity_score: similarityScore
+          similarity_score: similarityScore,
+          ats_score: atsScore
         };
       });
 
