@@ -60,6 +60,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         throw appError;
       }
 
+      // Fetch applicant profiles
       const applicantIds = appData.map(app => app.applicant_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -85,12 +86,13 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         const jobDetails = app.job;
         const jobText = jobDetails ? `${jobDetails.title} ${jobDetails.description} ${jobDetails.requirements}` : '';
         
-        // Mock resume text - in a real app this would come from parsing the resume
-        const mockResumeText = app.cover_letter || '';
+        // Use cover letter as resume text for similarity calculation
+        // In a real app, you would parse the actual resume file
+        const resumeText = app.cover_letter || '';
         
         // Calculate similarity score if we have both job text and resume text
-        const similarityScore = (jobText && mockResumeText) 
-          ? Math.round(calculateCosineSimilarity(jobText, mockResumeText) * 100) 
+        const similarityScore = (jobText && resumeText) 
+          ? Math.round(calculateCosineSimilarity(jobText, resumeText) * 100) 
           : null;
         
         return {

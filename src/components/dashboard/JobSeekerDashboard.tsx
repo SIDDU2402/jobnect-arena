@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,13 +98,24 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     }
   }, [jobs, applications]);
 
-  // Create application mutation
+  // Create application mutation, updated to handle resume upload
   const createApplicationMutation = useMutation({
-    mutationFn: async ({ jobId, coverLetter }: { jobId: string; coverLetter: string }) => {
+    mutationFn: async ({ 
+      jobId, 
+      coverLetter, 
+      resumeUrl,
+      resumeText 
+    }: { 
+      jobId: string; 
+      coverLetter: string; 
+      resumeUrl: string | null;
+      resumeText: string;
+    }) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Calculate a mock ATS score (in a real app, this would be done by an actual ATS system)
-      const atsScore = Math.floor(Math.random() * 41) + 60; // Random score between 60-100
+      // Calculate ATS score (in a real app, this would be done by an actual ATS system)
+      // Using a simplified mock score calculation based on matching keywords
+      const atsScore = calculateMockATSScore(resumeText, jobId, jobs); 
       
       const { data, error } = await supabase
         .from("applications")
@@ -113,6 +123,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           job_id: jobId,
           applicant_id: user.id,
           cover_letter: coverLetter,
+          resume_url: resumeUrl,
           ats_score: atsScore,
         })
         .select();
@@ -137,16 +148,39 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     },
   });
 
+  // Calculate a mock ATS score based on resume text and job requirements
+  const calculateMockATSScore = (resumeText: string, jobId: string, availableJobs: Job[] | undefined): number => {
+    if (!availableJobs) return 70; // Default score if jobs data isn't available
+    
+    const job = availableJobs.find(j => j.id === jobId);
+    if (!job) return 70; // Default score if job isn't found
+    
+    // In a real app, this would be a sophisticated algorithm
+    // For this demo, we'll do a simple keyword matching
+    const jobKeywords = `${job.title} ${job.description} ${job.requirements}`.toLowerCase().split(/\W+/);
+    const resumeKeywords = resumeText.toLowerCase().split(/\W+/);
+    
+    // Count matching keywords
+    const uniqueJobKeywords = [...new Set(jobKeywords)].filter(word => word.length > 3);
+    const matchCount = uniqueJobKeywords.filter(word => resumeKeywords.includes(word)).length;
+    
+    // Calculate percentage match (with a minimum of 60 and maximum of 98)
+    const rawScore = (matchCount / uniqueJobKeywords.length) * 100;
+    return Math.min(98, Math.max(60, Math.round(rawScore)));
+  };
+
   const handleApply = (job: Job) => {
     setApplyingToJob(job);
   };
 
-  const handleSubmitApplication = (coverLetter: string) => {
+  const handleSubmitApplication = (coverLetter: string, resumeUrl: string | null, resumeText: string) => {
     if (!applyingToJob) return;
     
     createApplicationMutation.mutate({
       jobId: applyingToJob.id,
       coverLetter,
+      resumeUrl,
+      resumeText
     });
     
     setApplyingToJob(null);
@@ -214,7 +248,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           <div className="text-2xl font-bold">
             {applications && applications.length > 0
               ? Math.round(
-                  applications.reduce((sum, app) => sum + app.ats_score, 0) / applications.length
+                  applications.reduce((sum, app) => sum + (app.ats_score || 0), 0) / applications.length
                 )
               : "-"}%
           </div>
@@ -360,7 +394,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
                     <div className="flex flex-col gap-2">
                       <div className="bg-secondary px-3 py-1 rounded flex items-center justify-center gap-1 text-sm">
                         <BarChart className="h-3.5 w-3.5" />
-                        <span className="font-medium">ATS Score: {application.ats_score}%</span>
+                        <span className="font-medium">ATS Score: {application.ats_score || 0}%</span>
                       </div>
                       <Button 
                         variant="outline" 
