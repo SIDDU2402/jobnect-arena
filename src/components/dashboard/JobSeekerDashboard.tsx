@@ -186,12 +186,17 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     setApplyingToJob(null);
   };
 
-  const handleViewJobDetails = (applicationId: string) => {
-    // In a real app, navigate to application details page
-    toast({
-      title: "Application Details",
-      description: `Viewing application ${applicationId}`,
-    });
+  const handleViewJobDetails = (application: JobApplication) => {
+    if (!application.job) {
+      toast({
+        title: "Error",
+        description: "Job details not available",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    navigate(`/jobs/${application.job_id}`);
   };
 
   const getStatusIcon = (status: string) => {
@@ -399,7 +404,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => handleViewJobDetails(application.id)}
+                        onClick={() => handleViewJobDetails(application)}
                       >
                         View Details
                       </Button>
