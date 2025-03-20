@@ -35,9 +35,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface ApplicationsListProps {
   applications: JobApplication[];
   onUpdateStatus: (id: string, status: 'pending' | 'reviewed' | 'rejected' | 'approved') => void;
+  onViewApplication: (application: JobApplication) => void;
 }
 
-const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProps) => {
+const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: ApplicationsListProps) => {
   const { toast } = useToast();
   const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<'score' | 'date'>('score');
@@ -248,14 +249,27 @@ const ApplicationsList = ({ applications, onUpdateStatus }: ApplicationsListProp
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => toggleApplicationDetails(application.id)}
-                  >
-                    {expandedApplication === application.id ? "Hide Details" : "View Details"}
-                  </Button>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => onViewApplication(application)}
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />
+                      View
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => toggleApplicationDetails(application.id)}
+                    >
+                      {expandedApplication === application.id ? "Hide" : "Details"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
