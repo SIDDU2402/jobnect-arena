@@ -13,7 +13,15 @@ import Jobs from "./pages/Jobs";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -21,7 +29,7 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="top-right" closeButton richColors />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
@@ -29,13 +37,10 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:id" element={<Jobs />} />
-            <Route path="/employers" element={<Index />} />
-            <Route path="/about" element={<Index />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              {/* Add other protected routes here */}
             </Route>
             
             {/* Catch-all route */}

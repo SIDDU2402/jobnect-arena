@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import EmployerDashboard from "@/components/dashboard/EmployerDashboard";
 import JobSeekerDashboard from "@/components/dashboard/JobSeekerDashboard";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
@@ -40,8 +41,13 @@ const Dashboard = () => {
 
   if (profileLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-screen bg-background">
+        <Card className="w-[300px] shadow-md">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+            <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

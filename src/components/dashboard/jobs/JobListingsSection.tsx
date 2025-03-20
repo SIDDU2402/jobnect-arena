@@ -11,23 +11,17 @@ import { useToast } from "@/hooks/use-toast";
 interface JobListingsSectionProps {
   jobs: Job[] | undefined;
   isLoading: boolean;
+  onViewJob: (jobId: string) => void;
 }
 
-const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
+const JobListingsSection = ({ jobs, isLoading, onViewJob }: JobListingsSectionProps) => {
   const [showPostingForm, setShowPostingForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleViewJob = (jobId: string) => {
-    toast({
-      title: "View Job",
-      description: `Viewing job with ID: ${jobId}`,
-    });
-  };
-
   return (
-    <>
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Your Job Postings</h2>
         <Button
@@ -63,7 +57,11 @@ const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
       )}
 
       {isLoading ? (
-        <div className="text-center py-10">Loading job postings...</div>
+        <div className="flex justify-center py-10">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-md bg-slate-200 h-24 w-full"></div>
+          </div>
+        </div>
       ) : jobs && jobs.length > 0 ? (
         <div className="space-y-4">
           {jobs.map((job) => (
@@ -74,7 +72,7 @@ const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
                 setSelectedJob(job);
                 setShowPostingForm(true);
               }}
-              onView={() => handleViewJob(job.id)}
+              onView={() => onViewJob(job.id)}
             />
           ))}
         </div>
@@ -90,7 +88,7 @@ const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
           </Button>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

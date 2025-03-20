@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,14 +6,15 @@ import { Job, JobApplication } from "@/types/job";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
-  FileText, Briefcase, Bookmark, BarChart, 
+  FileText, Briefcase, BarChart, 
   User, Clock, Info, CheckCircle, XCircle 
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { JobCard } from "@/components/JobCard";
 import ApplyForm from "./ApplyForm";
+import { Card } from "@/components/ui/card";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -98,7 +100,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     }
   }, [jobs, applications]);
 
-  // Create application mutation, updated to handle resume upload
+  // Create application mutation
   const createApplicationMutation = useMutation({
     mutationFn: async ({ 
       jobId, 
@@ -213,7 +215,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Welcome, {profile.first_name || "Job Seeker"}</h1>
         <p className="text-muted-foreground">Find your next career opportunity.</p>
@@ -221,7 +223,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-background border border-border rounded-xl p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-muted-foreground">Applications</span>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -230,9 +232,9 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
           <div className="text-2xl font-bold">{applications?.length || 0}</div>
           <div className="text-xs text-muted-foreground">Total applications</div>
-        </div>
+        </Card>
         
-        <div className="bg-background border border-border rounded-xl p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-muted-foreground">Available Jobs</span>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -241,9 +243,9 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
           <div className="text-2xl font-bold">{availableJobs?.length || 0}</div>
           <div className="text-xs text-muted-foreground">New opportunities</div>
-        </div>
+        </Card>
         
-        <div className="bg-background border border-border rounded-xl p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-muted-foreground">Avg. ATS Score</span>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -258,9 +260,9 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
               : "-"}%
           </div>
           <div className="text-xs text-muted-foreground">Resume performance</div>
-        </div>
+        </Card>
         
-        <div className="bg-background border border-border rounded-xl p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-muted-foreground">Profile Views</span>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -269,13 +271,13 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
           <div className="text-2xl font-bold">24</div>
           <div className="text-xs text-muted-foreground">Last 30 days</div>
-        </div>
+        </Card>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-border mb-6">
         <button
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'jobs' 
               ? 'text-primary border-b-2 border-primary' 
               : 'text-muted-foreground hover:text-foreground'
@@ -285,7 +287,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           Browse Jobs
         </button>
         <button
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'applications' 
               ? 'text-primary border-b-2 border-primary' 
               : 'text-muted-foreground hover:text-foreground'
@@ -329,7 +331,20 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           )}
           
           {jobsLoading ? (
-            <div className="text-center py-10">Loading jobs...</div>
+            <div className="grid grid-cols-1 gap-4">
+              {[1, 2, 3].map((item) => (
+                <Card key={item} className="p-4">
+                  <div className="animate-pulse">
+                    <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/4 mb-4"></div>
+                    <div className="flex justify-end">
+                      <div className="h-8 bg-slate-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           ) : (viewMode === 'all' ? availableJobs : recommendedJobs).length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
               {(viewMode === 'all' ? availableJobs : recommendedJobs).map((job) => (
@@ -375,11 +390,24 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
 
           {applicationsLoading ? (
-            <div className="text-center py-10">Loading applications...</div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((item) => (
+                <Card key={item} className="p-4">
+                  <div className="animate-pulse">
+                    <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/4 mb-4"></div>
+                    <div className="flex justify-end">
+                      <div className="h-8 bg-slate-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           ) : applications && applications.length > 0 ? (
             <div className="space-y-4">
               {applications.map((application) => (
-                <div key={application.id} className="border border-border rounded-lg p-4 bg-background">
+                <Card key={application.id} className="p-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -410,7 +438,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           ) : (

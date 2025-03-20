@@ -19,11 +19,8 @@ const JobListItem = ({ job, onEdit, onView }: JobListItemProps) => {
 
   const statusColor = statusColors[job.status as keyof typeof statusColors] || statusColors.active;
   
-  // Format salary to show ₹ symbol if it doesn't already have it
-  const formattedSalary = job.salary.includes('₹') ? job.salary : job.salary.replace('$', '₹');
-  
   return (
-    <div className="border border-border rounded-lg p-4 bg-background hover:bg-accent/5 transition-all duration-300">
+    <div className="border border-border rounded-lg p-4 bg-background hover:bg-accent/5 transition-all duration-200">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex-1">
           <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
@@ -40,7 +37,7 @@ const JobListItem = ({ job, onEdit, onView }: JobListItemProps) => {
             </div>
             <div className="flex items-center gap-1">
               <DollarSign className="h-3.5 w-3.5" />
-              <span>{formattedSalary}</span>
+              <span>{job.salary}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
