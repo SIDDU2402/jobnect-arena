@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import DashboardStats from "./stats/DashboardStats";
 import DashboardTabs from "./tabs/DashboardTabs";
 import JobListingsSection from "./jobs/JobListingsSection";
@@ -17,7 +15,6 @@ interface EmployerDashboardProps {
 
 const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'listings' | 'applications'>('listings');
 
@@ -150,10 +147,6 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const handleUpdateApplicationStatus = (applicationId: string, status: 'pending' | 'reviewed' | 'rejected' | 'approved') => {
     updateApplicationMutation.mutate({ id: applicationId, status });
   };
-  
-  const handleViewJob = (jobId: string) => {
-    navigate(`/jobs/${jobId}`);
-  };
 
   return (
     <div className="space-y-6">
@@ -170,7 +163,6 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         <JobListingsSection 
           jobs={jobs} 
           isLoading={jobsLoading}
-          onViewJob={handleViewJob}
         />
       )}
 

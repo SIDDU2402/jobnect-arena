@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import JobListItem from "../JobListItem";
 import JobPostingForm from "../JobPostingForm";
+import JobPreviewDialog from "../JobPreviewDialog";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -11,14 +12,20 @@ import { useToast } from "@/hooks/use-toast";
 interface JobListingsSectionProps {
   jobs: Job[] | undefined;
   isLoading: boolean;
-  onViewJob: (jobId: string) => void;
 }
 
-const JobListingsSection = ({ jobs, isLoading, onViewJob }: JobListingsSectionProps) => {
+const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
   const [showPostingForm, setShowPostingForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [previewJob, setPreviewJob] = useState<Job | undefined>(undefined);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const handleViewJob = (job: Job) => {
+    setPreviewJob(job);
+    setIsPreviewOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -56,6 +63,12 @@ const JobListingsSection = ({ jobs, isLoading, onViewJob }: JobListingsSectionPr
         />
       )}
 
+      <JobPreviewDialog 
+        job={previewJob} 
+        isOpen={isPreviewOpen} 
+        setIsOpen={setIsPreviewOpen} 
+      />
+
       {isLoading ? (
         <div className="flex justify-center py-10">
           <div className="animate-pulse flex space-x-4">
@@ -72,7 +85,7 @@ const JobListingsSection = ({ jobs, isLoading, onViewJob }: JobListingsSectionPr
                 setSelectedJob(job);
                 setShowPostingForm(true);
               }}
-              onView={() => onViewJob(job.id)}
+              onView={() => handleViewJob(job)}
             />
           ))}
         </div>
