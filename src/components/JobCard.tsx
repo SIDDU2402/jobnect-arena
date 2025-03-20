@@ -35,6 +35,9 @@ export const JobCard = ({
 
   const defaultLogo = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d";
 
+  // Format salary to show ₹ symbol if it doesn't already have it
+  const formattedSalary = salary.includes('₹') ? salary : salary.replace('$', '₹');
+
   return (
     <div 
       className={`relative group rounded-xl overflow-hidden transition-all duration-300 ${
@@ -93,7 +96,7 @@ export const JobCard = ({
               </div>
               <div className="flex items-center text-muted-foreground">
                 <DollarSign className="h-4 w-4 mr-2" />
-                <span className="text-sm">{salary}</span>
+                <span className="text-sm">{formattedSalary}</span>
               </div>
               <div className="flex items-center text-muted-foreground">
                 <Clock className="h-4 w-4 mr-2" />

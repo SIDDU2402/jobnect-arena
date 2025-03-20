@@ -20,17 +20,24 @@ const JobPostingForm = ({ job, onClose, onSuccess }: JobPostingFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Update the default salary value if it contains $ to use ₹ instead
+  const defaultSalary = job?.salary 
+    ? job.salary.includes('$') ? job.salary.replace('$', '₹') : job.salary
+    : "";
+  
   const [formData, setFormData] = useState<Partial<Job>>(
-    job || {
-      title: "",
-      company: "",
-      location: "",
-      salary: "",
-      type: "Full-time",
-      description: "",
-      requirements: "",
-      status: "active",
-    }
+    job 
+      ? { ...job, salary: defaultSalary }
+      : {
+          title: "",
+          company: "",
+          location: "",
+          salary: "",
+          type: "Full-time",
+          description: "",
+          requirements: "",
+          status: "active",
+        }
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -151,7 +158,7 @@ const JobPostingForm = ({ job, onClose, onSuccess }: JobPostingFormProps) => {
                 value={formData.location}
                 onChange={handleChange}
                 required
-                placeholder="e.g. Remote, New York, NY"
+                placeholder="e.g. Remote, Mumbai, Delhi"
               />
             </div>
             
@@ -163,7 +170,7 @@ const JobPostingForm = ({ job, onClose, onSuccess }: JobPostingFormProps) => {
                 value={formData.salary}
                 onChange={handleChange}
                 required
-                placeholder="e.g. $100k - $120k"
+                placeholder="e.g. ₹10L - ₹15L"
               />
             </div>
             

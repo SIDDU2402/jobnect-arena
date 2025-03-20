@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
@@ -21,14 +20,14 @@ const Jobs = () => {
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
   
-  // Sample job data
+  // Sample job data with Indian Rupee format
   const jobs = [
     {
       id: "1",
       title: "Senior UX Designer",
-      company: "Apple Inc.",
-      location: "San Francisco, CA",
-      salary: "$120k - $150k",
+      company: "Tech Solutions India",
+      location: "Bangalore, India",
+      salary: "₹18L - ₹25L",
       type: "Full-time",
       postedAt: "2 days ago",
       featured: true
@@ -36,27 +35,27 @@ const Jobs = () => {
     {
       id: "2",
       title: "Front-end Developer",
-      company: "Google",
+      company: "IndiaTech",
       location: "Remote",
-      salary: "$90k - $120k",
+      salary: "₹12L - ₹18L",
       type: "Full-time",
       postedAt: "1 week ago"
     },
     {
       id: "3",
       title: "Product Marketing Manager",
-      company: "Meta",
-      location: "New York, NY",
-      salary: "$110k - $130k",
+      company: "Flipkart",
+      location: "Mumbai, India",
+      salary: "₹15L - ₹22L",
       type: "Full-time",
       postedAt: "3 days ago"
     },
     {
       id: "4",
       title: "Data Scientist",
-      company: "Amazon",
-      location: "Seattle, WA",
-      salary: "$130k - $160k",
+      company: "Infosys",
+      location: "Hyderabad, India",
+      salary: "₹20L - ₹30L",
       type: "Full-time",
       postedAt: "5 days ago",
       featured: true
@@ -64,18 +63,18 @@ const Jobs = () => {
     {
       id: "5",
       title: "DevOps Engineer",
-      company: "Microsoft",
-      location: "Redmond, WA",
-      salary: "$110k - $140k",
+      company: "TCS",
+      location: "Pune, India",
+      salary: "₹15L - ₹22L",
       type: "Full-time",
       postedAt: "1 week ago"
     },
     {
       id: "6",
       title: "Content Writer",
-      company: "Medium",
+      company: "Content Labs",
       location: "Remote",
-      salary: "$60k - $80k",
+      salary: "₹6L - ₹10L",
       type: "Part-time",
       postedAt: "2 weeks ago"
     }
@@ -215,9 +214,9 @@ const Jobs = () => {
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">Salary Range (K)</h3>
+                  <h3 className="font-medium">Salary Range (Lakhs)</h3>
                   <span className="text-sm text-muted-foreground">
-                    ${salary[0]}K - ${salary[1]}K
+                    ₹{salary[0]}L - ₹{salary[1]}L
                   </span>
                 </div>
                 <Slider
@@ -308,9 +307,9 @@ const Jobs = () => {
                 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium">Salary Range (K)</h3>
+                    <h3 className="font-medium">Salary Range (Lakhs)</h3>
                     <span className="text-sm text-muted-foreground">
-                      ${salary[0]}K - ${salary[1]}K
+                      ₹{salary[0]}L - ₹{salary[1]}L
                     </span>
                   </div>
                   <Slider
