@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { JobCard } from "@/components/JobCard";
 import ApplyForm from "./ApplyForm";
 import { Card } from "@/components/ui/card";
+import JobSeekerApplicationPreviewDialog from "./JobSeekerApplicationPreviewDialog";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -28,6 +28,8 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const [activeTab, setActiveTab] = useState<'jobs' | 'applications'>('jobs');
   const [applyingToJob, setApplyingToJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'recommended'>('all');
+  const [previewApplication, setPreviewApplication] = useState<JobApplication | undefined>(undefined);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Query for available jobs
   const { data: jobs, isLoading: jobsLoading } = useQuery({
@@ -189,16 +191,8 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   };
 
   const handleViewJobDetails = (application: JobApplication) => {
-    if (!application.job) {
-      toast({
-        title: "Error",
-        description: "Job details not available",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    navigate(`/jobs/${application.job_id}`);
+    setPreviewApplication(application);
+    setIsPreviewOpen(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -216,6 +210,14 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Preview Dialog */}
+      <JobSeekerApplicationPreviewDialog
+        application={previewApplication}
+        isOpen={isPreviewOpen}
+        setIsOpen={setIsPreviewOpen}
+      />
+
+      {/* Welcome message */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Welcome, {profile.first_name || "Job Seeker"}</h1>
         <p className="text-muted-foreground">Find your next career opportunity.</p>
