@@ -87,14 +87,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {profile?.role === "job_seeker" ? (
               <>
                 <NavItem href="/jobs">Jobs</NavItem>
-                <NavItem href="/dashboard">Applications</NavItem>
               </>
-            ) : (
-              <>
-                <NavItem href="/dashboard">Job Listings</NavItem>
-                <NavItem href="/dashboard">Applications</NavItem>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
         
@@ -147,14 +141,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {profile?.role === "job_seeker" ? (
               <>
                 <NavItem href="/jobs">Jobs</NavItem>
-                <NavItem href="/dashboard">Applications</NavItem>
               </>
-            ) : (
-              <>
-                <NavItem href="/dashboard">Job Listings</NavItem>
-                <NavItem href="/dashboard">Applications</NavItem>
-              </>
-            )}
+            ) : null}
             
             <form onSubmit={handleSearch} className="relative mt-3">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

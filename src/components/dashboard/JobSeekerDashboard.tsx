@@ -15,6 +15,7 @@ import { JobCard } from "@/components/JobCard";
 import ApplyForm from "./ApplyForm";
 import { Card } from "@/components/ui/card";
 import JobSeekerApplicationPreviewDialog from "./JobSeekerApplicationPreviewDialog";
+import DashboardTabs from "./tabs/DashboardTabs";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -25,7 +26,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'jobs' | 'applications'>('jobs');
+  const [activeTab, setActiveTab] = useState<'listings' | 'applications'>('listings');
   const [applyingToJob, setApplyingToJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'recommended'>('all');
   const [previewApplication, setPreviewApplication] = useState<JobApplication | undefined>(undefined);
@@ -277,30 +278,9 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-6">
-        <button
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'jobs' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('jobs')}
-        >
-          Browse Jobs
-        </button>
-        <button
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'applications' 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-          onClick={() => setActiveTab('applications')}
-        >
-          My Applications
-        </button>
-      </div>
+      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === 'jobs' && (
+      {activeTab === 'listings' && (
         <>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">
@@ -449,7 +429,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={() => setActiveTab('jobs')}
+                onClick={() => setActiveTab('listings')}
               >
                 Browse Available Jobs
               </Button>
