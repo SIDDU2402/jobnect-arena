@@ -29,8 +29,7 @@ const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Your Job Postings</h2>
+      <div className="flex justify-end mb-6">
         <Button
           onClick={() => {
             setSelectedJob(null);
@@ -41,6 +40,10 @@ const JobListingsSection = ({ jobs, isLoading }: JobListingsSectionProps) => {
           <PlusCircle className="h-4 w-4" />
           Post New Job
         </Button>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">Your Job Postings</h2>
       </div>
 
       {showPostingForm && (
