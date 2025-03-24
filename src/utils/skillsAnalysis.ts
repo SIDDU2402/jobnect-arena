@@ -1,5 +1,5 @@
 
-// Function to tokenize text into words
+
 const tokenize = (text: string): string[] => {
   return text
     .toLowerCase()
@@ -27,10 +27,10 @@ export const calculateCosineSimilarity = (text1: string, text2: string): number 
   const tf1 = calculateTF(text1);
   const tf2 = calculateTF(text2);
   
-  // Get all unique terms
+  
   const allTerms = new Set([...Object.keys(tf1), ...Object.keys(tf2)]);
   
-  // Calculate dot product
+  
   let dotProduct = 0;
   let magnitude1 = 0;
   let magnitude2 = 0;
@@ -49,9 +49,9 @@ export const calculateCosineSimilarity = (text1: string, text2: string): number 
   return dotProduct / (Math.sqrt(magnitude1) * Math.sqrt(magnitude2));
 };
 
-// Extract skills from text using a simple keyword approach
+
 export const extractSkills = (text: string): string[] => {
-  // Common tech and professional skills
+ 
   const skillKeywords = [
     "javascript", "typescript", "html", "css", "react", "vue", "angular", 
     "node", "express", "mongodb", "sql", "postgresql", "mysql", "graphql",
@@ -69,10 +69,10 @@ export const extractSkills = (text: string): string[] => {
   const textLower = text.toLowerCase();
   const foundSkills = skillKeywords.filter(skill => textLower.includes(skill));
   
-  return [...new Set(foundSkills)]; // Remove duplicates
+  return [...new Set(foundSkills)];
 };
 
-// Compare job skills to resume skills and find missing skills
+
 export const findMissingSkills = (jobDescription: string, resumeText: string): string[] => {
   const jobSkills = extractSkills(jobDescription);
   const resumeSkills = extractSkills(resumeText);
