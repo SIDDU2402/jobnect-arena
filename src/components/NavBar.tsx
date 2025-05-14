@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { UserMenu } from "./UserMenu";
 
 export const NavBar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,12 +57,18 @@ export const NavBar = () => {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link to="/login">Log in</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/register">Sign up</Link>
-          </Button>
+          {user ? (
+            <UserMenu />
+          ) : (
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Sign up</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -110,12 +119,20 @@ export const NavBar = () => {
             </Link>
             <hr className="my-2 border-border" />
             <div className="flex flex-col gap-3">
-              <Button variant="outline" asChild className="justify-center">
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
-              </Button>
-              <Button asChild className="justify-center">
-                <Link to="/register" onClick={() => setIsMenuOpen(false)}>Sign up</Link>
-              </Button>
+              {user ? (
+                <div className="flex justify-center">
+                  <UserMenu />
+                </div>
+              ) : (
+                <>
+                  <Button variant="outline" asChild className="justify-center">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
+                  </Button>
+                  <Button asChild className="justify-center">
+                    <Link to="/register" onClick={() => setIsMenuOpen(false)}>Sign up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
