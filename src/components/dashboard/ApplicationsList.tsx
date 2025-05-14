@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { JobApplication } from "@/types/job";
 import { formatDistanceToNow } from "date-fns";
@@ -34,11 +35,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ApplicationsListProps {
   applications: JobApplication[];
-  onUpdateStatus: (id: string, status: 'pending' | 'reviewed' | 'rejected' | 'approved') => void;
-  onViewApplication: (application: JobApplication) => void;
+  onUpdateStatus?: (id: string, status: 'pending' | 'reviewed' | 'rejected' | 'approved') => void;
+  onViewApplication?: (application: JobApplication) => void;
+  isLoading?: boolean;
 }
 
-const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: ApplicationsListProps) => {
+const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication, isLoading }: ApplicationsListProps) => {
   const { toast } = useToast();
   const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<'score' | 'date'>('score');
@@ -137,6 +139,11 @@ const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: A
     }
   };
 
+  // If loading, show skeleton
+  if (isLoading) {
+    return <div>Loading applications...</div>;
+  }
+
   // Sort applications based on current sort option
   const sortedApplications = [...applications].sort((a, b) => {
     if (sortOption === 'score') {
@@ -188,8 +195,8 @@ const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: A
                 <div className="flex items-center">
                   <h3 className="font-semibold text-lg mr-2">{application.job?.title}</h3>
                   <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary text-xs">
-                    {getStatusIcon(application.status)}
-                    <span>{application.status.charAt(0).toUpperCase() + application.status.slice(1)}</span>
+                    {getStatusIcon(application.status || 'pending')}
+                    <span>{(application.status || 'pending').charAt(0).toUpperCase() + (application.status || 'pending').slice(1)}</span>
                   </div>
                 </div>
                 
@@ -197,7 +204,10 @@ const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: A
                   <div className="flex items-center gap-1">
                     <FileText className="h-3.5 w-3.5" />
                     <span>
-                      Applicant: {application.applicant?.first_name} {application.applicant?.last_name}
+                      {application.applicant ? 
+                        `Applicant: ${application.applicant.first_name || ''} ${application.applicant.last_name || ''}` :
+                        `Applicant ID: ${application.applicant_id.substring(0, 8)}...`
+                      }
                     </span>
                   </div>
                   <div className="mt-1">Applied {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}</div>
@@ -251,15 +261,17 @@ const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: A
                   </TooltipProvider>
 
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => onViewApplication(application)}
-                    >
-                      <Eye className="h-3.5 w-3.5 mr-1.5" />
-                      View
-                    </Button>
+                    {onViewApplication && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => onViewApplication(application)}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1.5" />
+                        View
+                      </Button>
+                    )}
                     
                     <Button 
                       variant="outline" 
@@ -340,38 +352,47 @@ const ApplicationsList = ({ applications, onUpdateStatus, onViewApplication }: A
                 </div>
               </div>
               
-              <div className="mt-6 bg-background p-3 rounded-md border border-border">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="font-medium text-sm mb-1 flex items-center">
-                      <ShieldCheck className="h-4 w-4 mr-1.5" />
-                      Application Status
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      Update the status of this application
-                    </p>
+              {onUpdateStatus && (
+                <div className="mt-6 bg-background p-3 rounded-md border border-border">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-medium text-sm mb-1 flex items-center">
+                        <ShieldCheck className="h-4 w-4 mr-1.5" />
+                        Application Status
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Update the status of this application
+                      </p>
+                    </div>
+                    
+                    <Select
+                      defaultValue={application.status || 'pending'}
+                      onValueChange={(value) => onUpdateStatus(application.id, value as any)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="reviewed">Reviewed</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
-                  <Select
-                    defaultValue={application.status}
-                    onValueChange={(value) => onUpdateStatus(application.id, value as any)}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="reviewed">Reviewed</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
       ))}
+      
+      {applications.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" />
+          <p>No applications found.</p>
+        </div>
+      )}
     </div>
   );
 };

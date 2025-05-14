@@ -4,25 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Github, Linkedin, FileText, Award, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface UserProfileData {
-  id: string;
-  first_name: string;
-  last_name: string;
-  skills: string[];
-  resume_url: string | null;
-  professional_summary: string | null;
-  github_url: string | null;
-  linkedin_url: string | null;
-  website_url: string | null;
-}
+import { UserProfile } from "@/types/job";
 
 interface ProfileSectionProps {
   profile: any;
@@ -34,7 +23,7 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState<Partial<UserProfileData>>({
+  const [formData, setFormData] = useState<Partial<UserProfile>>({
     skills: profile?.skills || [],
     professional_summary: profile?.professional_summary || "",
     resume_url: profile?.resume_url || "",
@@ -46,34 +35,35 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
   // Format skills as a string for the textarea
   const skillsString = Array.isArray(formData.skills) 
     ? formData.skills.join(", ") 
-    : formData.skills || "";
+    : "";
   
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: Partial<UserProfileData>) => {
+    mutationFn: async (data: Partial<UserProfile>) => {
       if (!user) throw new Error("User not authenticated");
       
       // Process skills - convert from comma-separated string to array
-      if (typeof data.skills === 'string') {
-        data.skills = data.skills.split(',').map(skill => skill.trim()).filter(Boolean);
+      let processedData = { ...data };
+      if (typeof processedData.skills === 'string') {
+        processedData.skills = (processedData.skills as string).split(',').map(skill => skill.trim()).filter(Boolean);
       }
       
-      const { data: result, error } = await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
-          professional_summary: data.professional_summary,
-          resume_url: data.resume_url,
-          github_url: data.github_url,
-          linkedin_url: data.linkedin_url,
-          website_url: data.website_url,
-          skills: data.skills,
+          professional_summary: processedData.professional_summary,
+          resume_url: processedData.resume_url,
+          github_url: processedData.github_url,
+          linkedin_url: processedData.linkedin_url,
+          website_url: processedData.website_url,
+          skills: processedData.skills,
         })
         .eq("id", user.id);
         
       if (error) throw error;
-      return result;
+      return null;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
@@ -99,9 +89,9 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
     // Convert skills from string to array before saving
     const dataToUpdate = {
       ...formData,
-      skills: skillsString, // This will be processed in the mutation function
+      skills: skillsString,
     };
-    updateProfileMutation.update(dataToUpdate);
+    updateProfileMutation.mutate(dataToUpdate);
   };
   
   const renderViewMode = () => {
@@ -276,7 +266,7 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
               id="skills"
               name="skills"
               value={skillsString}
-              onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, skills: e.target.value }))}
               placeholder="JavaScript, React, TypeScript, Node.js, etc."
               className="h-24"
             />

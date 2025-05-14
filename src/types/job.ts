@@ -1,3 +1,4 @@
+
 export interface Job {
   id: string;
   created_at: string;
@@ -22,6 +23,12 @@ export interface JobApplication {
   ats_score: number | null;
   status: string | null;
   job: Job;
+  similarity_score?: number;
+  applicant?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
 }
 
 export interface UserProfile {

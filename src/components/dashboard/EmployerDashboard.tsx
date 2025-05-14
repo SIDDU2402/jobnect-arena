@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,7 @@ import DashboardStats from "./stats/DashboardStats";
 import DashboardTabs from "./tabs/DashboardTabs";
 import JobListingsSection from "./jobs/JobListingsSection";
 import ApplicationsSection from "./applications/ApplicationsSection";
+import ProfileSection from "./profile/ProfileSection";
 import { Job, JobApplication } from "@/types/job";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
 
@@ -17,7 +17,7 @@ interface EmployerDashboardProps {
 const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'listings' | 'applications'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'profile'>('listings');
 
   const { data: jobs, isLoading: jobsLoading } = useQuery({
     queryKey: ["employer-jobs"],
@@ -115,6 +115,28 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
     },
   });
 
+  const { data: profileData, isLoading: profileLoading } = useQuery({
+    queryKey: ["user-profile", profile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", profile?.id)
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error loading profile",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      return data;
+    },
+  });
+
   const updateApplicationMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data, error } = await supabase
@@ -172,6 +194,13 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
           applications={applications}
           isLoading={applicationsLoading}
           onUpdateStatus={handleUpdateApplicationStatus}
+        />
+      )}
+
+      {activeTab === 'profile' && (
+        <ProfileSection 
+          profile={profileData}
+          isLoading={profileLoading}
         />
       )}
     </div>
