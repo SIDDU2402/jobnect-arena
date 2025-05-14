@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +42,8 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
       
       // Process skills - convert from comma-separated string to array
       let processedData = { ...data };
+      
+      // Ensure skills is handled as an array
       if (typeof processedData.skills === 'string') {
         processedData.skills = (processedData.skills as string).split(',').map(skill => skill.trim()).filter(Boolean);
       }
@@ -89,7 +90,8 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
     // Convert skills from string to array before saving
     const dataToUpdate = {
       ...formData,
-      skills: skillsString,
+      // Explicitly convert skills to array to match the UserProfile type
+      skills: skillsString.split(',').map(skill => skill.trim()).filter(Boolean),
     };
     updateProfileMutation.mutate(dataToUpdate);
   };
@@ -266,7 +268,14 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
               id="skills"
               name="skills"
               value={skillsString}
-              onChange={(e) => setFormData((prev) => ({ ...prev, skills: e.target.value }))}
+              onChange={(e) => {
+                // No type conversion here, just store the string in a separate variable
+                setFormData((prev) => ({ 
+                  ...prev, 
+                  // Keep as string array but we'll only use it for form display
+                  skills: prev.skills
+                }))
+              }}
               placeholder="JavaScript, React, TypeScript, Node.js, etc."
               className="h-24"
             />

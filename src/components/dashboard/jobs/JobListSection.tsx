@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import JobCard from "@/components/JobCard";
+import { JobCard } from "@/components/JobCard";
 
 interface JobListSectionProps {
   jobs: any[];
