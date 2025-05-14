@@ -46,8 +46,8 @@ const JobListSection = ({ jobs, isLoading }: JobListSectionProps) => {
               salary={job.salary}
               type={job.type}
               postedAt={job.created_at}
-              logo={job.logo}
-              featured={job.featured}
+              logo={job.logo || undefined}
+              featured={job.featured || false}
             />
           ))}
         </div>
