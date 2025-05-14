@@ -16,6 +16,7 @@ import ApplyForm from "./ApplyForm";
 import { Card } from "@/components/ui/card";
 import JobSeekerApplicationPreviewDialog from "./JobSeekerApplicationPreviewDialog";
 import DashboardTabs from "./tabs/DashboardTabs";
+import ProfileSection from "./profile/ProfileSection";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -26,7 +27,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'listings' | 'applications'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'profile'>('listings');
   const [applyingToJob, setApplyingToJob] = useState<Job | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'recommended'>('all');
   const [previewApplication, setPreviewApplication] = useState<JobApplication | undefined>(undefined);
@@ -80,6 +81,32 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
       }
 
       return data as JobApplication[];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user profile with extended data
+  const { data: extendedProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["extended-profile", user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+        
+      if (error) {
+        toast({
+          title: "Error loading profile",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      return data;
     },
     enabled: !!user,
   });
@@ -436,6 +463,13 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'profile' && (
+        <ProfileSection 
+          profile={extendedProfile} 
+          isLoading={profileLoading}
+        />
       )}
     </div>
   );
