@@ -19,26 +19,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up the auth state change listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    console.log("AuthProvider: Setting up auth state change listener");
+    
+    // First set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      console.log("Auth state changed:", _event, currentSession?.user?.email);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setIsLoading(false);
     });
 
     // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        console.log("AuthProvider: Checking for existing session");
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("Initial session found:", initialSession?.user?.email);
+        
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+        }
+      } catch (error) {
+        console.error("Error getting session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => {
+      console.log("AuthProvider: Cleaning up auth state change listener");
       subscription.unsubscribe();
     };
   }, []);
@@ -80,6 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log("Signing in with:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -88,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Store the session and user after successful login
+      console.log("Sign in successful:", data.user?.email);
       setSession(data.session);
       setUser(data.user);
       
@@ -98,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       navigate('/dashboard');
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Invalid email or password",
@@ -111,10 +132,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setIsLoading(true);
+      console.log("Signing out");
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       // Clear session and user state
+      console.log("Sign out successful");
       setSession(null);
       setUser(null);
       
@@ -125,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       navigate('/login');
     } catch (error: any) {
+      console.error("Logout error:", error);
       toast({
         title: "Error logging out",
         description: error.message || "An unexpected error occurred",

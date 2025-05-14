@@ -1,10 +1,12 @@
 
+import { FC } from "react";
+
 interface DashboardTabsProps {
   activeTab: 'listings' | 'applications' | 'profile';
   onTabChange: (tab: 'listings' | 'applications' | 'profile') => void;
 }
 
-const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) => {
+const DashboardTabs: FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="flex border-b border-border mb-6">
       <button

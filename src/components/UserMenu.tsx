@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,11 @@ import { User, LogOut, Settings } from "lucide-react";
 
 export const UserMenu = () => {
   const { user, signOut, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   // Not logged in state
   if (!user) {
@@ -63,7 +68,7 @@ export const UserMenu = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="cursor-pointer"
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           disabled={isLoading}
         >
           <LogOut className="mr-2 h-4 w-4" />

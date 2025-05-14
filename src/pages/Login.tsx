@@ -19,12 +19,14 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      console.log("User is already logged in, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("Login form submitted:", email);
     await signIn(email, password);
   };
 
