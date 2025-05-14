@@ -37,7 +37,18 @@ const JobListSection = ({ jobs, isLoading }: JobListSectionProps) => {
       {jobs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard 
+              key={job.id}
+              id={job.id}
+              title={job.title}
+              company={job.company}
+              location={job.location}
+              salary={job.salary}
+              type={job.type}
+              postedAt={job.created_at}
+              logo={job.logo}
+              featured={job.featured}
+            />
           ))}
         </div>
       ) : (
