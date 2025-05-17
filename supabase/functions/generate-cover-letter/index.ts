@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || "AIzaSyAAAncr4NWEryjFL7ChNXJZs_k3qvbpIq4";
     if (!GEMINI_API_KEY) {
       throw new Error('Missing Gemini API Key');
     }

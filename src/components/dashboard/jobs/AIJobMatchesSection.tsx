@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,8 @@ import { UserProfile, Job } from "@/types/job";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   ChevronDown,
   ChevronUp,
@@ -16,10 +18,13 @@ import {
   Zap,
   Check,
   AlertCircle,
-  Loader2
+  Loader2,
+  Rocket,
+  Bot
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface AIJobMatchesSectionProps {
   profile: UserProfile | null;
@@ -37,6 +42,8 @@ const AIJobMatchesSection = ({
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(true);
   const [autoApplyingJob, setAutoApplyingJob] = useState<string | null>(null);
+  const [agentActive, setAgentActive] = useState(false);
+  const [agentWorking, setAgentWorking] = useState(false);
   
   // Query to fetch job matches
   const { 
@@ -87,6 +94,85 @@ const AIJobMatchesSection = ({
     }
   };
 
+  const activateJobAgent = async () => {
+    if (!profile || !resumeText) {
+      toast({
+        title: "Cannot activate Agent",
+        description: "Please complete your profile and upload a resume first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setAgentActive(true);
+    toast.success("AI Job Agent activated!", {
+      description: "The agent will now monitor for suitable jobs and apply automatically."
+    });
+    
+    // Immediately run a job match scan
+    await runAgentCycle();
+  };
+  
+  const deactivateJobAgent = () => {
+    setAgentActive(false);
+    toast.info("AI Job Agent deactivated", {
+      description: "The agent will no longer apply to jobs automatically."
+    });
+  };
+  
+  const runAgentCycle = async () => {
+    if (!agentActive || !profile || !resumeText || agentWorking) return;
+    
+    try {
+      setAgentWorking(true);
+      
+      // Refetch latest job matches
+      await refetch();
+      
+      // Find the best match (if any) to auto-apply
+      if (jobMatches && jobMatches.length > 0) {
+        // Filter for only high-quality matches (above 70%)
+        const bestMatches = jobMatches.filter(match => match.score >= 0.7);
+        
+        if (bestMatches.length > 0) {
+          // Sort by score (highest first)
+          bestMatches.sort((a, b) => b.score - a.score);
+          
+          // Take the top match and auto-apply
+          const bestMatch = bestMatches[0];
+          
+          toast({
+            title: "AI Agent Found a Match!",
+            description: `Found highly suitable job: ${bestMatch.job.title} at ${bestMatch.job.company}`,
+          });
+          
+          // Short delay to allow user to see the toast notification
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // Auto-apply
+          await handleAutoApply(bestMatch);
+        }
+      }
+    } catch (error) {
+      console.error("Error in agent cycle:", error);
+    } finally {
+      setAgentWorking(false);
+    }
+  };
+  
+  // Run agent cycle every time agent status changes
+  useEffect(() => {
+    if (agentActive) {
+      // Initial scan
+      runAgentCycle();
+      
+      // Set up periodic scanning (every 2 minutes)
+      const intervalId = setInterval(runAgentCycle, 120000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [agentActive, profile, resumeText]);
+
   const formatMatchScore = (score: number) => {
     return Math.round(score * 100);
   };
@@ -122,10 +208,52 @@ const AIJobMatchesSection = ({
             transition={{ duration: 0.3 }}
           >
             <CardContent className="pt-4">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b">
+                <div className="flex items-center gap-3">
+                  <Bot className={`h-6 w-6 ${agentActive ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+                  <div>
+                    <h3 className="font-medium">AI Job Agent</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {agentActive 
+                        ? "Agent is active and will automatically apply to matching jobs" 
+                        : "Activate the agent to automatically apply to best matching jobs"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="agent-toggle" className={agentActive ? "text-primary font-medium" : "text-muted-foreground"}>
+                    {agentActive ? "Active" : "Inactive"}
+                  </Label>
+                  <Switch
+                    id="agent-toggle"
+                    checked={agentActive}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        activateJobAgent();
+                      } else {
+                        deactivateJobAgent();
+                      }
+                    }}
+                    className={`${agentActive ? 'data-[state=checked]:bg-primary' : ''}`}
+                  />
+                </div>
+              </div>
+              
               <p className="text-sm text-muted-foreground mb-4">
                 Our AI has analyzed your profile and found these job matches for you.
                 You can auto-apply to these positions with an AI-generated cover letter.
               </p>
+              
+              {agentWorking && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-primary/10 rounded-md flex items-center gap-3"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <p className="text-sm font-medium">AI agent is scanning jobs and preparing applications...</p>
+                </motion.div>
+              )}
               
               {isLoading ? (
                 <div className="space-y-4">
@@ -192,6 +320,7 @@ const AIJobMatchesSection = ({
                           size="sm"
                           onClick={() => handleAutoApply(jobMatch)}
                           disabled={autoApplyingJob === jobMatch.job.id}
+                          className="animate-in fade-in"
                         >
                           {autoApplyingJob === jobMatch.job.id ? (
                             <>
@@ -224,6 +353,7 @@ const AIJobMatchesSection = ({
                 size="sm"
                 onClick={() => refetch()}
                 disabled={isLoading}
+                className="transition-all duration-300 hover:bg-primary/10"
               >
                 {isLoading ? (
                   <>

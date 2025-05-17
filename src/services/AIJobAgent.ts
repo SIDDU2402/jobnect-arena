@@ -88,6 +88,21 @@ export class AIJobAgent {
     resumeText: string
   ): Promise<boolean> {
     try {
+      // Check if already applied to this job
+      const { data: existingApplications } = await supabase
+        .from("applications")
+        .select("id")
+        .eq("job_id", job.id)
+        .eq("applicant_id", userProfile.id)
+        .maybeSingle();
+        
+      if (existingApplications) {
+        toast.info("Already applied", {
+          description: `You've already applied to "${job.title}".`
+        });
+        return false;
+      }
+      
       // Generate cover letter using Gemini API
       const coverLetter = await this.generateCoverLetter(job, userProfile, resumeText);
       
@@ -191,5 +206,22 @@ export class AIJobAgent {
     } else {
       return `Potential match. You have ${matchingSkills.length} of ${requiredSkills.length} required skills.`;
     }
+  }
+  
+  /**
+   * Checks if a user's profile and resume are ready for agent operation
+   */
+  static isProfileReadyForAgent(profile: UserProfile | null, resumeText: string | null): boolean {
+    if (!profile || !resumeText) return false;
+    
+    // Check if profile has necessary information
+    const hasBasicInfo = profile.first_name && profile.last_name;
+    const hasSkills = Array.isArray(profile.skills) && profile.skills.length > 0;
+    const hasSummary = !!profile.professional_summary;
+    
+    // Check if resume text is substantial enough (at least 100 characters)
+    const hasResumeContent = resumeText.length >= 100;
+    
+    return hasBasicInfo && hasSkills && hasSummary && hasResumeContent;
   }
 }
