@@ -31,6 +31,7 @@ export interface JobApplication {
     first_name: string | null;
     last_name: string | null;
   };
+  auto_applied?: boolean;
 }
 
 export interface UserProfile {

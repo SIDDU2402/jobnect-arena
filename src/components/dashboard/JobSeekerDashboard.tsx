@@ -8,9 +8,11 @@ import DashboardTabs from "./tabs/DashboardTabs";
 import ProfileSection from "./profile/ProfileSection";
 import JobListSection from "./jobs/JobListSection";
 import ApplicationsList from "./applications/ApplicationsList";
+import AIJobMatchesSection from "./jobs/AIJobMatchesSection";
 import { JobApplication, Job } from "@/types/job";
 import ApplyForm from "./ApplyForm";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
+import { motion } from "framer-motion";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -22,6 +24,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'profile'>('listings');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
+  const [resumeText, setResumeText] = useState<string>("");
 
   // Fetch job seeker's applications
   const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = useQuery({
@@ -102,13 +105,16 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     setIsApplyFormOpen(true);
   };
 
-  const handleApplyFormSubmit = async (coverLetter: string, resumeUrl: string | null, resumeText: string) => {
+  const handleApplyFormSubmit = async (coverLetter: string, resumeUrl: string | null, parsedResumeText: string) => {
     if (!user || !selectedJob) return;
     
     try {
+      // Save the resume text for AI job matching
+      setResumeText(parsedResumeText);
+      
       // Calculate similarity score between resume and job description
       const similarityScore = calculateCosineSimilarity(
-        resumeText,
+        parsedResumeText,
         `${selectedJob.description} ${selectedJob.requirements}`
       );
       
@@ -146,39 +152,70 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
+      <motion.div 
+        className="mb-6"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-2xl font-bold mb-1">Job Seeker Dashboard</h1>
         <p className="text-muted-foreground">Find opportunities and track your applications.</p>
-      </div>
+      </motion.div>
+      
+      {/* AI Job Matches Section - Only show if profile and resume are available */}
+      {resumeText && profileData && (
+        <AIJobMatchesSection 
+          profile={profileData} 
+          resumeUrl={profileData?.resume_url} 
+          resumeText={resumeText}
+          onRefreshApplications={refetchApplications}
+        />
+      )}
       
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
       
       {activeTab === 'listings' && (
-        <section className="space-y-6">
+        <motion.section 
+          className="space-y-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
           <h2 className="text-xl font-semibold">Available Jobs</h2>
           <JobListSection 
             jobs={availableJobs || []} 
             isLoading={jobsLoading} 
             onApplyClick={handleApplyClick}
           />
-        </section>
+        </motion.section>
       )}
       
       {activeTab === 'applications' && (
-        <section className="space-y-6">
+        <motion.section 
+          className="space-y-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
           <h2 className="text-xl font-semibold">Your Applications</h2>
           <ApplicationsList 
             applications={applications || []}
             isLoading={applicationsLoading} 
           />
-        </section>
+        </motion.section>
       )}
 
       {activeTab === 'profile' && (
-        <ProfileSection 
-          profile={profileData}
-          isLoading={profileLoading}
-        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <ProfileSection 
+            profile={profileData}
+            isLoading={profileLoading}
+          />
+        </motion.div>
       )}
 
       {isApplyFormOpen && selectedJob && (

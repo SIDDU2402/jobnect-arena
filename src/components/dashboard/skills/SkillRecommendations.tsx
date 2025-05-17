@@ -41,19 +41,89 @@ const SkillRecommendations = ({ job, resumeText }: SkillRecommendationsProps) =>
   
   // Generate course recommendations with links
   const generateCourseLinks = (skill: string): CourseLink[] => {
-    // This is where you would implement your actual course recommendation logic
-    // Here we're just creating mock data based on the skill
-    const platforms = ["Coursera", "Udemy", "edX", "LinkedIn", "YouTube"];
+    // Map of real course links for common skills
+    const realCourses: Record<string, CourseLink[]> = {
+      "javascript": [
+        { title: "The Complete JavaScript Course", url: "https://www.udemy.com/course/the-complete-javascript-course/", platform: "Udemy" },
+        { title: "JavaScript - The Complete Guide", url: "https://www.udemy.com/course/javascript-the-complete-guide-2020-beginner-advanced/", platform: "Udemy" },
+        { title: "JavaScript Programming Basics", url: "https://www.coursera.org/learn/javascript-basics", platform: "Coursera" }
+      ],
+      "react": [
+        { title: "Modern React with Redux", url: "https://www.udemy.com/course/react-redux/", platform: "Udemy" },
+        { title: "React - The Complete Guide", url: "https://www.udemy.com/course/react-the-complete-guide-incl-redux/", platform: "Udemy" },
+        { title: "Meta React Native Specialization", url: "https://www.coursera.org/specializations/meta-react-native", platform: "Coursera" }
+      ],
+      "python": [
+        { title: "Complete Python Bootcamp", url: "https://www.udemy.com/course/complete-python-bootcamp/", platform: "Udemy" },
+        { title: "Python for Everybody", url: "https://www.coursera.org/specializations/python", platform: "Coursera" },
+        { title: "Python for Data Science", url: "https://www.edx.org/course/python-for-data-science", platform: "edX" }
+      ],
+      "node": [
+        { title: "NodeJS - The Complete Guide", url: "https://www.udemy.com/course/nodejs-the-complete-guide/", platform: "Udemy" },
+        { title: "Node.js Developer Course", url: "https://www.udemy.com/course/the-complete-nodejs-developer-course-2/", platform: "Udemy" }
+      ],
+      "sql": [
+        { title: "The Complete SQL Bootcamp", url: "https://www.udemy.com/course/the-complete-sql-bootcamp/", platform: "Udemy" },
+        { title: "SQL for Data Science", url: "https://www.coursera.org/learn/sql-for-data-science", platform: "Coursera" }
+      ],
+      "machine learning": [
+        { title: "Machine Learning by Andrew Ng", url: "https://www.coursera.org/learn/machine-learning", platform: "Coursera" },
+        { title: "Machine Learning A-Z", url: "https://www.udemy.com/course/machinelearning/", platform: "Udemy" }
+      ],
+      "aws": [
+        { title: "AWS Certified Solutions Architect", url: "https://www.udemy.com/course/aws-certified-solutions-architect-associate/", platform: "Udemy" },
+        { title: "AWS Cloud Technical Essentials", url: "https://www.coursera.org/learn/aws-cloud-technical-essentials", platform: "Coursera" }
+      ],
+      "design": [
+        { title: "UI/UX Design Specialization", url: "https://www.coursera.org/specializations/ui-ux-design", platform: "Coursera" },
+        { title: "Web Design for Beginners", url: "https://www.udemy.com/course/web-design-for-beginners-real-world-coding-in-html-css/", platform: "Udemy" }
+      ],
+      "typescript": [
+        { title: "Understanding TypeScript", url: "https://www.udemy.com/course/understanding-typescript/", platform: "Udemy" },
+        { title: "TypeScript Complete Course", url: "https://www.udemy.com/course/typescript-the-complete-developers-guide/", platform: "Udemy" }
+      ],
+      "git": [
+        { title: "Git Complete: The Definitive Guide", url: "https://www.udemy.com/course/git-complete/", platform: "Udemy" },
+        { title: "Version Control with Git", url: "https://www.coursera.org/learn/version-control-with-git", platform: "Coursera" }
+      ]
+    };
     
-    // Create 1-3 course recommendations per skill
-    const numCourses = Math.floor(Math.random() * 3) + 1;
+    // Return real courses if available, otherwise generate placeholder data
+    if (skill.toLowerCase() in realCourses) {
+      return realCourses[skill.toLowerCase()];
+    }
+    
+    // Create generic course recommendations for skills without predefined courses
+    const platforms = ["Coursera", "Udemy", "edX", "LinkedIn", "YouTube"];
+    const numCourses = Math.floor(Math.random() * 2) + 1;
     const courses: CourseLink[] = [];
     
     for (let i = 0; i < numCourses; i++) {
       const platform = platforms[Math.floor(Math.random() * platforms.length)];
+      const searchQuery = encodeURIComponent(skill);
+      let url = "";
+      
+      switch (platform) {
+        case "Coursera":
+          url = `https://www.coursera.org/search?query=${searchQuery}`;
+          break;
+        case "Udemy":
+          url = `https://www.udemy.com/courses/search/?q=${searchQuery}`;
+          break;
+        case "edX":
+          url = `https://www.edx.org/search?q=${searchQuery}`;
+          break;
+        case "LinkedIn":
+          url = `https://www.linkedin.com/learning/search?keywords=${searchQuery}`;
+          break;
+        case "YouTube":
+          url = `https://www.youtube.com/results?search_query=${searchQuery}+tutorial`;
+          break;
+      }
+      
       courses.push({
-        title: `${platform} ${skill} Course ${i + 1}`,
-        url: `https://www.${platform.toLowerCase()}.com/course/${skill.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
+        title: `Learn ${skill} on ${platform}`,
+        url,
         platform
       });
     }
