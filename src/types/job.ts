@@ -11,6 +11,8 @@ export interface Job {
   requirements: string;
   employer_id: string;
   status: string | null;
+  logo?: string | null;
+  featured?: boolean;
 }
 
 export interface JobApplication {
