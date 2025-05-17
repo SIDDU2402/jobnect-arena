@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 
 interface AIJobMatchesSectionProps {
   profile: UserProfile | null;
@@ -105,7 +104,8 @@ const AIJobMatchesSection = ({
     }
     
     setAgentActive(true);
-    toast.success("AI Job Agent activated!", {
+    toast({
+      title: "AI Job Agent activated!",
       description: "The agent will now monitor for suitable jobs and apply automatically."
     });
     
@@ -115,7 +115,8 @@ const AIJobMatchesSection = ({
   
   const deactivateJobAgent = () => {
     setAgentActive(false);
-    toast.info("AI Job Agent deactivated", {
+    toast({
+      title: "AI Job Agent deactivated",
       description: "The agent will no longer apply to jobs automatically."
     });
   };

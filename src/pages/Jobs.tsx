@@ -17,8 +17,8 @@ const Jobs = () => {
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     setIsVisible(true);
@@ -53,10 +53,10 @@ const Jobs = () => {
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesLocation = locationFilter === "" || 
+    const matchesLocation = locationFilter === "all" || 
       job.location.toLowerCase().includes(locationFilter.toLowerCase());
       
-    const matchesType = typeFilter === "" || job.type === typeFilter;
+    const matchesType = typeFilter === "all" || job.type === typeFilter;
     
     return matchesSearch && matchesLocation && matchesType;
   });
@@ -143,7 +143,7 @@ const Jobs = () => {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Locations</SelectItem>
+                    <SelectItem value="all">All Locations</SelectItem>
                     {uniqueLocations.map((location) => (
                       <SelectItem key={location} value={location}>
                         {location}
@@ -165,7 +165,7 @@ const Jobs = () => {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Job Types</SelectItem>
+                    <SelectItem value="all">All Job Types</SelectItem>
                     {uniqueTypes.map((type) => (
                       <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
@@ -181,8 +181,8 @@ const Jobs = () => {
               
               <Button variant="outline" size="sm" onClick={() => {
                 setSearchTerm("");
-                setLocationFilter("");
-                setTypeFilter("");
+                setLocationFilter("all");
+                setTypeFilter("all");
               }}>
                 <Filter className="h-4 w-4 mr-2" />
                 Clear Filters
