@@ -1,4 +1,5 @@
 
+import { Job } from "@/types/job";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -6,11 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/JobCard";
 
 interface JobListSectionProps {
-  jobs: any[];
+  jobs: Job[];
   isLoading: boolean;
+  onApplyClick?: (job: Job) => void;
 }
 
-const JobListSection = ({ jobs, isLoading }: JobListSectionProps) => {
+const JobListSection = ({ jobs, isLoading, onApplyClick }: JobListSectionProps) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -48,6 +50,7 @@ const JobListSection = ({ jobs, isLoading }: JobListSectionProps) => {
               postedAt={job.created_at}
               logo={job.logo || undefined}
               featured={job.featured || false}
+              onApply={onApplyClick ? () => onApplyClick(job) : undefined}
             />
           ))}
         </div>

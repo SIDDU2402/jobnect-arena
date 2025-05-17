@@ -14,3 +14,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true
   }
 });
+
+// Create storage buckets if they don't exist
+export const ensureStorageBuckets = async () => {
+  const { data: buckets } = await supabase.storage.listBuckets();
+  
+  if (!buckets?.find(bucket => bucket.name === 'resumes')) {
+    await supabase.storage.createBucket('resumes', {
+      public: false,
+      fileSizeLimit: 10485760, // 10MB limit
+      allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    });
+  }
+};
+
+// Initialize storage
+ensureStorageBuckets().catch(console.error);

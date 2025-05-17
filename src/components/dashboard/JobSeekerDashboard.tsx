@@ -7,8 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import DashboardTabs from "./tabs/DashboardTabs";
 import ProfileSection from "./profile/ProfileSection";
 import JobListSection from "./jobs/JobListSection";
-import ApplicationsList from "./ApplicationsList";
-import { JobApplication } from "@/types/job";
+import ApplicationsList from "./applications/ApplicationsList";
+import { JobApplication, Job } from "@/types/job";
+import ApplyForm from "./ApplyForm";
+import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -18,9 +20,11 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'profile'>('listings');
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
 
   // Fetch job seeker's applications
-  const { data: applications, isLoading: applicationsLoading } = useQuery({
+  const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = useQuery({
     queryKey: ["jobseeker-applications", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,7 +69,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         throw error;
       }
 
-      return data;
+      return data as Job[];
     },
   });
 
@@ -93,6 +97,53 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     enabled: !!user?.id,
   });
 
+  const handleApplyClick = (job: Job) => {
+    setSelectedJob(job);
+    setIsApplyFormOpen(true);
+  };
+
+  const handleApplyFormSubmit = async (coverLetter: string, resumeUrl: string | null, resumeText: string) => {
+    if (!user || !selectedJob) return;
+    
+    try {
+      // Calculate similarity score between resume and job description
+      const similarityScore = calculateCosineSimilarity(
+        resumeText,
+        `${selectedJob.description} ${selectedJob.requirements}`
+      );
+      
+      // Convert to a percentage and round to 2 decimal places
+      const atsScore = Math.round(similarityScore * 100);
+      
+      const { error } = await supabase.from("applications").insert({
+        job_id: selectedJob.id,
+        applicant_id: user.id,
+        cover_letter: coverLetter,
+        resume_url: resumeUrl,
+        ats_score: atsScore,
+        status: "pending"
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Application submitted",
+        description: "Your application has been submitted successfully!",
+      });
+      
+      setIsApplyFormOpen(false);
+      refetchApplications();
+      setActiveTab('applications');
+      
+    } catch (error: any) {
+      toast({
+        title: "Error submitting application",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -105,7 +156,11 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
       {activeTab === 'listings' && (
         <section className="space-y-6">
           <h2 className="text-xl font-semibold">Available Jobs</h2>
-          <JobListSection jobs={availableJobs || []} isLoading={jobsLoading} />
+          <JobListSection 
+            jobs={availableJobs || []} 
+            isLoading={jobsLoading} 
+            onApplyClick={handleApplyClick}
+          />
         </section>
       )}
       
@@ -123,6 +178,14 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         <ProfileSection 
           profile={profileData}
           isLoading={profileLoading}
+        />
+      )}
+
+      {isApplyFormOpen && selectedJob && (
+        <ApplyForm
+          job={selectedJob}
+          onClose={() => setIsApplyFormOpen(false)}
+          onSubmit={handleApplyFormSubmit}
         />
       )}
     </div>
