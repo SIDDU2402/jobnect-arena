@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/JobCard";
+import { motion } from "framer-motion";
 
 interface JobListSectionProps {
   jobs: Job[];
@@ -34,28 +35,59 @@ const JobListSection = ({ jobs, isLoading, onApplyClick }: JobListSectionProps) 
     );
   }
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const emptyStateVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { duration: 0.4 }
+    }
+  };
+
   return (
     <div>
       {jobs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {jobs.map((job) => (
-            <JobCard 
+          {jobs.map((job, index) => (
+            <motion.div
               key={job.id}
-              id={job.id}
-              title={job.title}
-              company={job.company}
-              location={job.location}
-              salary={job.salary}
-              type={job.type}
-              postedAt={job.created_at}
-              logo={job.logo || undefined}
-              featured={job.featured || false}
-              onApply={onApplyClick ? () => onApplyClick(job) : undefined}
-            />
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            >
+              <JobCard 
+                id={job.id}
+                title={job.title}
+                company={job.company}
+                location={job.location}
+                salary={job.salary}
+                type={job.type}
+                postedAt={job.created_at}
+                logo={job.logo || undefined}
+                featured={job.featured || false}
+                onApply={onApplyClick ? () => onApplyClick(job) : undefined}
+              />
+            </motion.div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-10 border border-dashed rounded-lg border-border">
+        <motion.div 
+          className="text-center py-10 border border-dashed rounded-lg border-border"
+          variants={emptyStateVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
           <p className="text-muted-foreground mb-6">There are currently no jobs available.</p>
           <Button asChild>
@@ -64,7 +96,7 @@ const JobListSection = ({ jobs, isLoading, onApplyClick }: JobListSectionProps) 
               Browse All Jobs
             </Link>
           </Button>
-        </div>
+        </motion.div>
       )}
     </div>
   );
