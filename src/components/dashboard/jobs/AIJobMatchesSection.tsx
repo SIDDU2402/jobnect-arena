@@ -19,7 +19,6 @@ import {
   Check,
   AlertCircle,
   Loader2,
-  Rocket,
   Bot
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

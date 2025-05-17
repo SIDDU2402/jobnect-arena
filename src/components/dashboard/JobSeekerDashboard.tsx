@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +25,39 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
   const [resumeText, setResumeText] = useState<string>("");
+  
+  // Effect to initialize resume text for AI job matching if profile has a resume URL
+  useEffect(() => {
+    const fetchResumeText = async () => {
+      if (profile?.resume_url) {
+        try {
+          // If we previously stored resume text in session storage (to avoid re-processing)
+          const cachedResumeText = sessionStorage.getItem(`resume_text_${profile.id}`);
+          if (cachedResumeText) {
+            setResumeText(cachedResumeText);
+            return;
+          }
+          
+          // Try to get processed resume text from Supabase function
+          const { data, error } = await supabase.functions.invoke('extract-resume-text', {
+            body: { resumeUrl: profile.resume_url }
+          });
+          
+          if (error) throw error;
+          
+          if (data?.text) {
+            setResumeText(data.text);
+            // Cache the result to avoid repeated processing
+            sessionStorage.setItem(`resume_text_${profile.id}`, data.text);
+          }
+        } catch (error) {
+          console.error('Error extracting resume text:', error);
+        }
+      }
+    };
+    
+    fetchResumeText();
+  }, [profile]);
 
   // Fetch job seeker's applications
   const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = useQuery({
@@ -162,15 +195,13 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         <p className="text-muted-foreground">Find opportunities and track your applications.</p>
       </motion.div>
       
-      {/* AI Job Matches Section - Only show if profile and resume are available */}
-      {resumeText && profileData && (
-        <AIJobMatchesSection 
-          profile={profileData} 
-          resumeUrl={profileData?.resume_url} 
-          resumeText={resumeText}
-          onRefreshApplications={refetchApplications}
-        />
-      )}
+      {/* AI Job Matches Section - Show regardless of whether resumeText is available */}
+      <AIJobMatchesSection 
+        profile={profileData} 
+        resumeUrl={profileData?.resume_url} 
+        resumeText={resumeText}
+        onRefreshApplications={refetchApplications}
+      />
       
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
       

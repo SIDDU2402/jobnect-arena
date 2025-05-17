@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Job, UserProfile } from "@/types/job";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
-import { toast } from "sonner";
 
 export interface JobMatch {
   job: Job;
@@ -73,7 +72,6 @@ export class AIJobAgent {
         .sort((a, b) => b.score - a.score);
     } catch (error) {
       console.error("Error finding matching jobs:", error);
-      toast.error("Failed to find job matches");
       return [];
     }
   }
@@ -97,9 +95,7 @@ export class AIJobAgent {
         .maybeSingle();
         
       if (existingApplications) {
-        toast.info("Already applied", {
-          description: `You've already applied to "${job.title}".`
-        });
+        console.log("Already applied to this job");
         return false;
       }
       
@@ -130,14 +126,9 @@ export class AIJobAgent {
       
       if (error) throw error;
       
-      toast.success("Successfully applied to job", {
-        description: `Your application for "${job.title}" has been submitted.`
-      });
-      
       return true;
     } catch (error) {
       console.error("Error auto-applying to job:", error);
-      toast.error("Failed to auto-apply to job");
       return false;
     }
   }
