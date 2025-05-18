@@ -225,11 +225,11 @@ export class AIJobAgent {
    */
   private static async logApplicationForLearning(userId: string, jobId: string): Promise<void> {
     try {
-      // Store application attempt in applications table with metadata instead of non-existent agent_learning_data table
+      // Store application attempt in applications table with metadata
       await supabase
         .from("applications")
         .insert({
-          applicant_id: userId, // Fixed: using applicant_id instead of user_id
+          applicant_id: userId,
           job_id: jobId,
           status: "learning",
           application_metadata: {
@@ -412,7 +412,7 @@ export class AIJobAgent {
       "authentication", "authorization", "oauth", "jwt", "rest apis", "microservices",
       "serverless", "cloud architecture", "database design", "data modeling",
       "etl", "big data", "hadoop", "spark", "tableau", "power bi", "excel",
-      "statistical analysis", "quantum computing", "virtual reality", "augmented reality"
+      "statistical analysis"
     ];
     
     const textLower = text.toLowerCase();
@@ -440,7 +440,7 @@ export class AIJobAgent {
       }
     });
     
-    return [...new Set([...directMatches, ...patternMatches])];
+    return [...new Set([...directMatches, ...Array.from(patternMatches)])];
   }
   
   /**
