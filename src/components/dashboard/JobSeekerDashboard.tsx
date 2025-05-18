@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +26,6 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
   const [resumeText, setResumeText] = useState<string>("");
   
-  // Effect to initialize resume text for AI job matching if profile has a resume URL
   useEffect(() => {
     const fetchResumeText = async () => {
       if (profile?.resume_url) {
@@ -76,7 +74,6 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     fetchResumeText();
   }, [profile?.resume_url, profile?.id, toast]);
 
-  // Fetch job seeker's applications
   const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = useQuery({
     queryKey: ["jobseeker-applications", user?.id],
     queryFn: async () => {
@@ -103,7 +100,6 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     enabled: !!user?.id,
   });
 
-  // Fetch all available jobs for job seeker to apply
   const { data: availableJobs, isLoading: jobsLoading } = useQuery({
     queryKey: ["available-jobs"],
     queryFn: async () => {
@@ -126,7 +122,6 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     },
   });
 
-  // Fetch user profile data
   const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ["user-profile", user?.id],
     queryFn: async () => {
