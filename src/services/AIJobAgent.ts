@@ -32,6 +32,21 @@ const SKILL_KEYWORDS: string[] = [
   "statistical analysis"
 ];
 
+// Define simple types for the successful applications to avoid deep recursion
+interface SimpleApplication {
+  cover_letter: string | null;
+  ats_score: number | null;
+  job_id: string;
+}
+
+interface SimpleJobDetail {
+  id: string;
+  title: string;
+  company: string;
+  description?: string;
+  requirements?: string;
+}
+
 export class AIJobAgent {
   private static MIN_MATCH_SCORE = 0.5; // Minimum match score to consider a job suitable
   private static MAX_AUTO_APPLICATIONS_PER_DAY = 3; // Limit auto-applications to avoid spamming
@@ -185,12 +200,12 @@ export class AIJobAgent {
         
       // Fetch job details for successful applications to improve learning
       const jobIds = (successfulApplications || []).map(app => app.job_id);
-      let successfulJobDetails = [];
+      let successfulJobDetails: SimpleJobDetail[] = [];
       
       if (jobIds.length > 0) {
         const { data: relatedJobs } = await supabase
           .from("jobs")
-          .select("*")
+          .select("id, title, company")
           .in("id", jobIds);
           
         successfulJobDetails = relatedJobs || [];
@@ -201,7 +216,7 @@ export class AIJobAgent {
         job, 
         userProfile, 
         resumeText,
-        successfulApplications || [],
+        (successfulApplications || []) as SimpleApplication[],
         successfulJobDetails
       );
       
@@ -274,8 +289,8 @@ export class AIJobAgent {
     job: Job,
     userProfile: UserProfile,
     resumeText: string,
-    successfulApplications: any[],
-    successfulJobDetails: any[]
+    successfulApplications: SimpleApplication[],
+    successfulJobDetails: SimpleJobDetail[]
   ): Promise<string | null> {
     try {
       // Create enhanced context with successful patterns
