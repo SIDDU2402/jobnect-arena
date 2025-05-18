@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface AIJobMatchesSectionProps {
   profile: UserProfile | null;
@@ -42,6 +43,11 @@ const AIJobMatchesSection = ({
   const [autoApplyingJob, setAutoApplyingJob] = useState<string | null>(null);
   const [agentActive, setAgentActive] = useState(false);
   const [agentWorking, setAgentWorking] = useState(false);
+  
+  // Check if profile is ready for AI Agent operations
+  const isProfileReadyForAgent = profile && resumeText 
+    ? AIJobAgent.isProfileReadyForAgent(profile, resumeText) 
+    : false;
   
   // Query to fetch job matches
   const { 
@@ -78,7 +84,16 @@ const AIJobMatchesSection = ({
       );
       
       if (success) {
+        toast({
+          title: "Application Submitted",
+          description: `Successfully applied to ${jobMatch.job.title} at ${jobMatch.job.company}!`,
+        });
         onRefreshApplications();
+      } else {
+        toast({
+          title: "Already Applied",
+          description: "You've already applied to this job.",
+        });
       }
     } catch (error) {
       console.error("Error auto-applying to job:", error);
@@ -93,7 +108,7 @@ const AIJobMatchesSection = ({
   };
 
   const activateJobAgent = async () => {
-    if (!profile || !resumeText) {
+    if (!isProfileReadyForAgent) {
       toast({
         title: "Cannot activate Agent",
         description: "Please complete your profile and upload a resume first.",
@@ -108,6 +123,9 @@ const AIJobMatchesSection = ({
       description: "The agent will now monitor for suitable jobs and apply automatically."
     });
     
+    // Store agent state in session storage to persist across refreshes
+    sessionStorage.setItem('aiJobAgentActive', 'true');
+    
     // Immediately run a job match scan
     await runAgentCycle();
   };
@@ -118,7 +136,18 @@ const AIJobMatchesSection = ({
       title: "AI Job Agent deactivated",
       description: "The agent will no longer apply to jobs automatically."
     });
+    
+    // Remove agent state from session storage
+    sessionStorage.removeItem('aiJobAgentActive');
   };
+  
+  // Restore agent state from session storage on component mount
+  useEffect(() => {
+    const storedAgentState = sessionStorage.getItem('aiJobAgentActive');
+    if (storedAgentState === 'true' && isProfileReadyForAgent) {
+      setAgentActive(true);
+    }
+  }, [isProfileReadyForAgent]);
   
   const runAgentCycle = async () => {
     if (!agentActive || !profile || !resumeText || agentWorking) return;
@@ -160,9 +189,9 @@ const AIJobMatchesSection = ({
     }
   };
   
-  // Run agent cycle every time agent status changes
+  // Run agent cycle when agent is activated
   useEffect(() => {
-    if (agentActive) {
+    if (agentActive && isProfileReadyForAgent) {
       // Initial scan
       runAgentCycle();
       
@@ -171,7 +200,7 @@ const AIJobMatchesSection = ({
       
       return () => clearInterval(intervalId);
     }
-  }, [agentActive, profile, resumeText]);
+  }, [agentActive, isProfileReadyForAgent]);
 
   const formatMatchScore = (score: number) => {
     return Math.round(score * 100);
@@ -208,6 +237,16 @@ const AIJobMatchesSection = ({
             transition={{ duration: 0.3 }}
           >
             <CardContent className="pt-4">
+              {!isProfileReadyForAgent && (
+                <Alert className="mb-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <AlertTitle className="text-amber-800 dark:text-amber-500 text-sm font-medium">Profile incomplete</AlertTitle>
+                  <AlertDescription className="text-amber-700 dark:text-amber-400 text-xs">
+                    Complete your profile with professional summary, skills, and resume to enable the AI Job Agent.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <div className="flex justify-between items-center mb-6 pb-4 border-b">
                 <div className="flex items-center gap-3">
                   <Bot className={`h-6 w-6 ${agentActive ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
@@ -227,6 +266,7 @@ const AIJobMatchesSection = ({
                   <Switch
                     id="agent-toggle"
                     checked={agentActive}
+                    disabled={!isProfileReadyForAgent}
                     onCheckedChange={(checked) => {
                       if (checked) {
                         activateJobAgent();
@@ -234,14 +274,14 @@ const AIJobMatchesSection = ({
                         deactivateJobAgent();
                       }
                     }}
-                    className={`${agentActive ? 'data-[state=checked]:bg-primary' : ''}`}
+                    className={agentActive ? "data-[state=checked]:bg-primary" : ""}
                   />
                 </div>
               </div>
               
               <p className="text-sm text-muted-foreground mb-4">
-                Our AI has analyzed your profile and found these job matches for you.
-                You can auto-apply to these positions with an AI-generated cover letter.
+                Our AI analyzes your profile and finds job matches for you.
+                You can auto-apply to positions with an AI-generated cover letter.
               </p>
               
               {agentWorking && (
@@ -319,7 +359,7 @@ const AIJobMatchesSection = ({
                         <Button 
                           size="sm"
                           onClick={() => handleAutoApply(jobMatch)}
-                          disabled={autoApplyingJob === jobMatch.job.id}
+                          disabled={autoApplyingJob === jobMatch.job.id || !isProfileReadyForAgent}
                           className="animate-in fade-in"
                         >
                           {autoApplyingJob === jobMatch.job.id ? (
@@ -341,7 +381,9 @@ const AIJobMatchesSection = ({
               ) : (
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">
-                    No job matches found. Complete your profile and upload a resume to get started.
+                    {!resumeText 
+                      ? "Upload a resume to get job matches."
+                      : "No job matches found. Complete your profile to improve matches."}
                   </p>
                 </div>
               )}
@@ -352,7 +394,7 @@ const AIJobMatchesSection = ({
                 variant="outline" 
                 size="sm"
                 onClick={() => refetch()}
-                disabled={isLoading}
+                disabled={isLoading || !resumeText}
                 className="transition-all duration-300 hover:bg-primary/10"
               >
                 {isLoading ? (

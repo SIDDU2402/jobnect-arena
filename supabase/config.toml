@@ -1,5 +1,55 @@
 
 project_id = "buodncdyidpsasjhkfsn"
 
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+experimental_backend = true
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "https://localhost:54321"
+additional_redirect_urls = ["http://localhost:54321", "https://localhost:54321"]
+jwt_expiry = 3600
+enable_signup = true
+
+[inbucket]
+enabled = true
+
+[vector]
+enabled = true
+default_semantic_search = true
+
 [functions.generate-cover-letter]
 verify_jwt = true
+
+[functions.extract-resume-text]
+verify_jwt = true
+

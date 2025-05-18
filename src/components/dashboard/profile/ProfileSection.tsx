@@ -1,24 +1,26 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Github, Linkedin, FileText, Award, ExternalLink } from "lucide-react";
+import { Github, Linkedin, FileText, Award, ExternalLink, Bot, AlertTriangle, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserProfile } from "@/types/job";
+import { AIJobAgent } from "@/services/AIJobAgent";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ProfileSectionProps {
   profile: any;
   isLoading: boolean;
+  resumeText: string | null;
 }
 
-const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
+const ProfileSection = ({ profile, isLoading, resumeText }: ProfileSectionProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,10 +34,38 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
     website_url: profile?.website_url || "",
   });
   
+  // Check if profile is ready for AI Agent operations
+  const isProfileReadyForAgent = profile && resumeText 
+    ? AIJobAgent.isProfileReadyForAgent(profile, resumeText) 
+    : false;
+
   // Format skills as a string for the textarea
   const skillsString = Array.isArray(formData.skills) 
     ? formData.skills.join(", ") 
     : "";
+  
+  // Get missing profile items for agent readiness
+  const getMissingProfileItems = () => {
+    const missingItems = [];
+    
+    if (!profile?.professional_summary) {
+      missingItems.push("Professional summary");
+    }
+    
+    if (!Array.isArray(profile?.skills) || profile.skills.length === 0) {
+      missingItems.push("Skills");
+    }
+    
+    if (!profile?.resume_url) {
+      missingItems.push("Resume URL");
+    }
+    
+    if (!resumeText || resumeText.length < 100) {
+      missingItems.push("Valid resume content");
+    }
+    
+    return missingItems;
+  };
   
   const updateProfileMutation = useMutation({
     mutationFn: async (data: Partial<UserProfile>) => {
@@ -104,6 +134,8 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
       return <ProfileSkeleton />;
     }
     
+    const missingItems = getMissingProfileItems();
+    
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -115,6 +147,25 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
             Edit Profile
           </Button>
         </div>
+        
+        {/* Agent Readiness Status */}
+        {isProfileReadyForAgent ? (
+          <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900">
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-500" />
+            <AlertTitle className="text-green-800 dark:text-green-500">AI Job Agent Ready</AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-400">
+              Your profile is ready for AI job matching and auto-applications. Go to the Jobs section to activate the agent!
+            </AlertDescription>
+          </Alert>
+        ) : missingItems.length > 0 ? (
+          <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <AlertTitle className="text-amber-800 dark:text-amber-500">Complete Your Profile</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-400">
+              To enable the AI Job Agent, please add: {missingItems.join(", ")}
+            </AlertDescription>
+          </Alert>
+        ) : null}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Professional Summary */}
@@ -218,6 +269,42 @@ const ProfileSection = ({ profile, isLoading }: ProfileSectionProps) => {
                 {!profile?.github_url && !profile?.linkedin_url && !profile?.website_url && !profile?.resume_url && (
                   <p className="text-muted-foreground italic">Add your professional links to help employers connect with you.</p>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* AI Agent Information */}
+          <Card className="md:col-span-2 border-primary/10">
+            <CardHeader className="bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">AI Job Agent</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <p className="text-sm">
+                The AI Job Agent helps you find and apply to jobs that match your profile. 
+                It analyzes your skills, resume, and professional experiences to identify 
+                suitable opportunities, then automatically generates personalized cover letters 
+                tailored to each job description.
+              </p>
+              
+              <div className="mt-4 space-y-2">
+                <h4 className="font-medium text-sm">To enable the AI Job Agent, you need:</h4>
+                <ul className="list-disc pl-5 text-sm space-y-1">
+                  <li className={profile?.professional_summary ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                    Professional summary {profile?.professional_summary ? "✓" : ""}
+                  </li>
+                  <li className={profile?.skills && profile.skills.length > 0 ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                    List of skills {profile?.skills && profile.skills.length > 0 ? "✓" : ""}
+                  </li>
+                  <li className={profile?.resume_url ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                    Resume URL {profile?.resume_url ? "✓" : ""}
+                  </li>
+                  <li className={resumeText && resumeText.length >= 100 ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
+                    Valid resume content {resumeText && resumeText.length >= 100 ? "✓" : ""}
+                  </li>
+                </ul>
               </div>
             </CardContent>
           </Card>
