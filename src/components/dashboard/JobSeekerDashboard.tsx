@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,7 @@ import { JobApplication, Job } from "@/types/job";
 import ApplyForm from "./ApplyForm";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -221,9 +220,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         onRefreshApplications={refetchApplications}
       />
       
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'listings' | 'applications' | 'profile')}>
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        
+      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab}>
         <TabsContent value="listings" className="mt-4">
           <motion.section 
             className="space-y-6"
@@ -268,7 +265,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
             />
           </motion.div>
         </TabsContent>
-      </Tabs>
+      </DashboardTabs>
 
       {isApplyFormOpen && selectedJob && (
         <ApplyForm

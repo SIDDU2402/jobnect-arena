@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,7 @@ import ApplicationsSection from "./applications/ApplicationsSection";
 import ProfileSection from "./profile/ProfileSection";
 import { Job, JobApplication } from "@/types/job";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 
 interface EmployerDashboardProps {
   profile: any;
@@ -185,9 +184,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
 
       <DashboardStats jobs={jobs} applications={applications} />
       
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'listings' | 'applications' | 'profile')}>
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
+      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab}>
         <TabsContent value="listings" className="mt-4">
           <JobListingsSection 
             jobs={jobs} 
@@ -210,7 +207,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
             resumeText={resumeText}
           />
         </TabsContent>
-      </Tabs>
+      </DashboardTabs>
     </div>
   );
 };
