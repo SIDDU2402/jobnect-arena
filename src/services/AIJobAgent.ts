@@ -210,7 +210,7 @@ export class AIJobAgent {
       
       if (error) throw error;
       
-      // Log this application for learning - Fix: Store in applications table instead of non-existent agent_learning_data
+      // Log this application for learning
       await this.logApplicationForLearning(userProfile.id, job.id);
       
       return true;
@@ -393,7 +393,7 @@ export class AIJobAgent {
    */
   private static extractSkillsFromText(text: string): string[] {
     // Common skill keywords to look for
-    const skillKeywords = [
+    const skillKeywords: string[] = [
       "javascript", "typescript", "html", "css", "react", "vue", "angular", 
       "node", "express", "mongodb", "sql", "postgresql", "mysql", "graphql",
       "rest", "api", "aws", "azure", "gcp", "docker", "kubernetes", "python",
@@ -440,6 +440,7 @@ export class AIJobAgent {
       }
     });
     
+    // Use explicit Array.from to avoid type inference issues
     return [...new Set([...directMatches, ...Array.from(patternMatches)])];
   }
   
