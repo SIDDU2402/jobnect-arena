@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,12 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
             return;
           }
           
+          // Set loading state
+          toast({
+            title: "Processing resume",
+            description: "Extracting text from your resume...",
+          });
+          
           // Try to get processed resume text from Supabase function
           const { data, error } = await supabase.functions.invoke('extract-resume-text', {
             body: { resumeUrl: profile.resume_url }
@@ -48,15 +55,25 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
             setResumeText(data.text);
             // Cache the result to avoid repeated processing
             sessionStorage.setItem(`resume_text_${profile.id}`, data.text);
+            
+            toast({
+              title: "Resume processed",
+              description: "Your resume is now ready for AI job matching.",
+            });
           }
         } catch (error) {
           console.error('Error extracting resume text:', error);
+          toast({
+            title: "Resume processing failed",
+            description: "There was an issue extracting text from your resume.",
+            variant: "destructive",
+          });
         }
       }
     };
     
     fetchResumeText();
-  }, [profile]);
+  }, [profile?.resume_url, profile?.id, toast]);
 
   // Fetch job seeker's applications
   const { data: applications, isLoading: applicationsLoading, refetch: refetchApplications } = useQuery({
@@ -143,6 +160,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     try {
       // Save the resume text for AI job matching
       setResumeText(parsedResumeText);
+      sessionStorage.setItem(`resume_text_${user.id}`, parsedResumeText);
       
       // Calculate similarity score between resume and job description
       const similarityScore = calculateCosineSimilarity(
@@ -159,7 +177,11 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         cover_letter: coverLetter,
         resume_url: resumeUrl,
         ats_score: atsScore,
-        status: "pending"
+        status: "pending",
+        application_metadata: {
+          applied_at: new Date().toISOString(),
+          manual_application: true
+        }
       });
       
       if (error) throw error;
