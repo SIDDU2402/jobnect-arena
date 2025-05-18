@@ -210,7 +210,7 @@ export class AIJobAgent {
       
       if (error) throw error;
       
-      // Log this application for learning
+      // Log this application for learning - Fix: Store in applications table instead of non-existent agent_learning_data
       await this.logApplicationForLearning(userProfile.id, job.id);
       
       return true;
@@ -225,16 +225,19 @@ export class AIJobAgent {
    */
   private static async logApplicationForLearning(userId: string, jobId: string): Promise<void> {
     try {
-      // Store application attempt in agent learning data
+      // Store application attempt in applications table with metadata instead of non-existent agent_learning_data table
       await supabase
-        .from("agent_learning_data")
+        .from("applications")
         .insert({
-          user_id: userId,
+          applicant_id: userId, // Fixed: using applicant_id instead of user_id
           job_id: jobId,
-          action: "auto_apply",
-          timestamp: new Date().toISOString()
-        })
-        .select();
+          status: "learning",
+          application_metadata: {
+            action: "auto_apply",
+            timestamp: new Date().toISOString(),
+            learning_data: true
+          }
+        });
     } catch (error) {
       console.error("Error logging application for learning:", error);
     }
