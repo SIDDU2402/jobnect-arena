@@ -5,9 +5,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface DashboardTabsProps {
   activeTab: 'listings' | 'applications' | 'profile';
   onTabChange: (tab: 'listings' | 'applications' | 'profile') => void;
+  children?: React.ReactNode;
 }
 
-const DashboardTabs: FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
+const DashboardTabs: FC<DashboardTabsProps> = ({ 
+  activeTab, 
+  onTabChange,
+  children
+}) => {
   return (
     <div className="mb-6">
       <TabsList className="w-full sm:w-auto border-b border-border bg-transparent p-0 h-auto">
@@ -45,6 +50,7 @@ const DashboardTabs: FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
           Profile
         </TabsTrigger>
       </TabsList>
+      {children}
     </div>
   );
 };

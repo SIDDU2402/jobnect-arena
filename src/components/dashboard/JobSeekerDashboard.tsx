@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -223,7 +224,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'listings' | 'applications' | 'profile')}>
         <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <TabsContent value="listings">
+        <TabsContent value="listings" className="mt-4">
           <motion.section 
             className="space-y-6"
             initial={{ opacity: 0 }}
@@ -239,7 +240,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </motion.section>
         </TabsContent>
         
-        <TabsContent value="applications">
+        <TabsContent value="applications" className="mt-4">
           <motion.section 
             className="space-y-6"
             initial={{ opacity: 0 }}
@@ -254,7 +255,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </motion.section>
         </TabsContent>
 
-        <TabsContent value="profile">
+        <TabsContent value="profile" className="mt-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

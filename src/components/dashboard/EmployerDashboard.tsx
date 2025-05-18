@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -187,14 +188,14 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'listings' | 'applications' | 'profile')}>
         <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <TabsContent value="listings">
+        <TabsContent value="listings" className="mt-4">
           <JobListingsSection 
             jobs={jobs} 
             isLoading={jobsLoading}
           />
         </TabsContent>
 
-        <TabsContent value="applications">
+        <TabsContent value="applications" className="mt-4">
           <ApplicationsSection 
             applications={applications}
             isLoading={applicationsLoading}
@@ -202,7 +203,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
           />
         </TabsContent>
 
-        <TabsContent value="profile">
+        <TabsContent value="profile" className="mt-4">
           <ProfileSection 
             profile={profileData}
             isLoading={profileLoading}

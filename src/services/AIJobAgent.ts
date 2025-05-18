@@ -9,6 +9,29 @@ export interface JobMatch {
   matchReason: string;
 }
 
+// Common skill keywords - moved outside class to avoid deep type instantiation
+const SKILL_KEYWORDS: string[] = [
+  "javascript", "typescript", "html", "css", "react", "vue", "angular", 
+  "node", "express", "mongodb", "sql", "postgresql", "mysql", "graphql",
+  "rest", "api", "aws", "azure", "gcp", "docker", "kubernetes", "python",
+  "django", "flask", "ruby", "rails", "php", "laravel", "java", "spring",
+  "c#", ".net", "scala", "swift", "kotlin", "flutter", "dart", "mobile",
+  "android", "ios", "react native", "design", "figma", "sketch", "adobe",
+  "photoshop", "illustrator", "xd", "ui", "ux", "frontend", "backend",
+  "fullstack", "devops", "cicd", "git", "github", "gitlab", "product",
+  "agile", "scrum", "kanban", "marketing", "seo", "analytics", "data",
+  "science", "machine learning", "ai", "blockchain", "crypto", "leadership",
+  "management", "communication", "teamwork", "problem solving", "critical thinking",
+  "project management", "strategic planning", "financial analysis", "budgeting",
+  "stakeholder management", "content creation", "copywriting", "a/b testing",
+  "customer experience", "user research", "web accessibility", "responsive design",
+  "cross-browser compatibility", "performance optimization", "security",
+  "authentication", "authorization", "oauth", "jwt", "rest apis", "microservices",
+  "serverless", "cloud architecture", "database design", "data modeling",
+  "etl", "big data", "hadoop", "spark", "tableau", "power bi", "excel",
+  "statistical analysis"
+];
+
 export class AIJobAgent {
   private static MIN_MATCH_SCORE = 0.5; // Minimum match score to consider a job suitable
   private static MAX_AUTO_APPLICATIONS_PER_DAY = 3; // Limit auto-applications to avoid spamming
@@ -392,33 +415,10 @@ export class AIJobAgent {
    * with enhanced pattern recognition
    */
   private static extractSkillsFromText(text: string): string[] {
-    // Common skill keywords to look for
-    const skillKeywords: string[] = [
-      "javascript", "typescript", "html", "css", "react", "vue", "angular", 
-      "node", "express", "mongodb", "sql", "postgresql", "mysql", "graphql",
-      "rest", "api", "aws", "azure", "gcp", "docker", "kubernetes", "python",
-      "django", "flask", "ruby", "rails", "php", "laravel", "java", "spring",
-      "c#", ".net", "scala", "swift", "kotlin", "flutter", "dart", "mobile",
-      "android", "ios", "react native", "design", "figma", "sketch", "adobe",
-      "photoshop", "illustrator", "xd", "ui", "ux", "frontend", "backend",
-      "fullstack", "devops", "cicd", "git", "github", "gitlab", "product",
-      "agile", "scrum", "kanban", "marketing", "seo", "analytics", "data",
-      "science", "machine learning", "ai", "blockchain", "crypto", "leadership",
-      "management", "communication", "teamwork", "problem solving", "critical thinking",
-      "project management", "strategic planning", "financial analysis", "budgeting",
-      "stakeholder management", "content creation", "copywriting", "a/b testing",
-      "customer experience", "user research", "web accessibility", "responsive design",
-      "cross-browser compatibility", "performance optimization", "security",
-      "authentication", "authorization", "oauth", "jwt", "rest apis", "microservices",
-      "serverless", "cloud architecture", "database design", "data modeling",
-      "etl", "big data", "hadoop", "spark", "tableau", "power bi", "excel",
-      "statistical analysis"
-    ];
-    
     const textLower = text.toLowerCase();
     
     // First pass: direct keyword matching
-    const directMatches = skillKeywords.filter(skill => textLower.includes(skill));
+    const directMatches = SKILL_KEYWORDS.filter(skill => textLower.includes(skill));
     
     // Second pass: pattern-based extraction for multi-word skills not in our list
     const skillPatterns = [
@@ -440,8 +440,11 @@ export class AIJobAgent {
       }
     });
     
-    // Use explicit Array.from to avoid type inference issues
-    return [...new Set([...directMatches, ...Array.from(patternMatches)])];
+    // Combine both match types
+    const combinedMatches = [...directMatches];
+    patternMatches.forEach(match => combinedMatches.push(match));
+    
+    return combinedMatches;
   }
   
   /**
