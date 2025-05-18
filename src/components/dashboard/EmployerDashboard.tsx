@@ -19,6 +19,9 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'profile'>('listings');
 
+  // Add state for resume text (will be null for employers)
+  const [resumeText, setResumeText] = useState<string | null>(null);
+
   const { data: jobs, isLoading: jobsLoading } = useQuery({
     queryKey: ["employer-jobs"],
     queryFn: async () => {
@@ -201,6 +204,7 @@ const EmployerDashboard = ({ profile }: EmployerDashboardProps) => {
         <ProfileSection 
           profile={profileData}
           isLoading={profileLoading}
+          resumeText={resumeText} // Pass the resumeText prop here
         />
       )}
     </div>
