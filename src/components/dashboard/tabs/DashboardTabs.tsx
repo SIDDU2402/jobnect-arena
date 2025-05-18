@@ -1,5 +1,6 @@
 
 import { FC } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DashboardTabsProps {
   activeTab: 'listings' | 'applications' | 'profile';
@@ -8,37 +9,41 @@ interface DashboardTabsProps {
 
 const DashboardTabs: FC<DashboardTabsProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="flex border-b border-border mb-6">
-      <button
-        className={`px-4 py-2 font-medium transition-colors ${
-          activeTab === 'listings' 
-            ? 'text-primary border-b-2 border-primary' 
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-        onClick={() => onTabChange('listings')}
-      >
-        Job Listings
-      </button>
-      <button
-        className={`px-4 py-2 font-medium transition-colors ${
-          activeTab === 'applications' 
-            ? 'text-primary border-b-2 border-primary' 
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-        onClick={() => onTabChange('applications')}
-      >
-        Applications
-      </button>
-      <button
-        className={`px-4 py-2 font-medium transition-colors ${
-          activeTab === 'profile' 
-            ? 'text-primary border-b-2 border-primary' 
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-        onClick={() => onTabChange('profile')}
-      >
-        Profile
-      </button>
+    <div className="mb-6">
+      <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as 'listings' | 'applications' | 'profile')}>
+        <TabsList className="w-full sm:w-auto border-b border-border bg-transparent p-0 h-auto">
+          <TabsTrigger 
+            value="listings"
+            className={`px-4 py-2 font-medium transition-colors rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none ${
+              activeTab === 'listings' 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Job Listings
+          </TabsTrigger>
+          <TabsTrigger 
+            value="applications"
+            className={`px-4 py-2 font-medium transition-colors rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none ${
+              activeTab === 'applications' 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Applications
+          </TabsTrigger>
+          <TabsTrigger 
+            value="profile"
+            className={`px-4 py-2 font-medium transition-colors rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none ${
+              activeTab === 'profile' 
+                ? 'text-primary border-b-2 border-primary' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Profile
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 };

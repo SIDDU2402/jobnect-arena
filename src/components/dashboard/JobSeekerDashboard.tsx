@@ -13,6 +13,7 @@ import { JobApplication, Job } from "@/types/job";
 import ApplyForm from "./ApplyForm";
 import { calculateCosineSimilarity } from "@/utils/skillsAnalysis";
 import { motion } from "framer-motion";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -224,52 +225,54 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         onRefreshApplications={refetchApplications}
       />
       
-      <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      {activeTab === 'listings' && (
-        <motion.section 
-          className="space-y-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h2 className="text-xl font-semibold">Available Jobs</h2>
-          <JobListSection 
-            jobs={availableJobs || []} 
-            isLoading={jobsLoading} 
-            onApplyClick={handleApplyClick}
-          />
-        </motion.section>
-      )}
-      
-      {activeTab === 'applications' && (
-        <motion.section 
-          className="space-y-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h2 className="text-xl font-semibold">Your Applications</h2>
-          <ApplicationsList 
-            applications={applications || []}
-            isLoading={applicationsLoading} 
-          />
-        </motion.section>
-      )}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'listings' | 'applications' | 'profile')}>
+        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <TabsContent value="listings">
+          <motion.section 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h2 className="text-xl font-semibold">Available Jobs</h2>
+            <JobListSection 
+              jobs={availableJobs || []} 
+              isLoading={jobsLoading} 
+              onApplyClick={handleApplyClick}
+            />
+          </motion.section>
+        </TabsContent>
+        
+        <TabsContent value="applications">
+          <motion.section 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h2 className="text-xl font-semibold">Your Applications</h2>
+            <ApplicationsList 
+              applications={applications || []}
+              isLoading={applicationsLoading} 
+            />
+          </motion.section>
+        </TabsContent>
 
-      {activeTab === 'profile' && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <ProfileSection 
-            profile={profileData}
-            isLoading={profileLoading}
-            resumeText={resumeText}
-          />
-        </motion.div>
-      )}
+        <TabsContent value="profile">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ProfileSection 
+              profile={profileData}
+              isLoading={profileLoading}
+              resumeText={resumeText}
+            />
+          </motion.div>
+        </TabsContent>
+      </Tabs>
 
       {isApplyFormOpen && selectedJob && (
         <ApplyForm
