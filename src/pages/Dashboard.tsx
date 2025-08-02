@@ -27,14 +27,41 @@ const Dashboard = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid errors if profile doesn't exist
         
       if (error) {
         console.error("Error fetching profile:", error);
-        toast.error("Failed to load profile", {
-          description: error.message
-        });
         throw error;
+      }
+      
+      // If no profile exists, create one automatically
+      if (!data) {
+        console.log("No profile found, creating default profile");
+        const defaultProfile = {
+          id: user.id,
+          first_name: user.user_metadata?.first_name || user.email?.split('@')[0] || 'User',
+          last_name: user.user_metadata?.last_name || '',
+          role: user.user_metadata?.role || 'job_seeker',
+          skills: [],
+          preferences: {}
+        };
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from("profiles")
+          .insert(defaultProfile)
+          .select()
+          .single();
+          
+        if (createError) {
+          console.error("Error creating profile:", createError);
+          toast.error("Failed to create profile", {
+            description: createError.message
+          });
+          throw createError;
+        }
+        
+        console.log("Profile created:", newProfile);
+        return newProfile;
       }
       
       console.log("Profile loaded:", data?.role);
