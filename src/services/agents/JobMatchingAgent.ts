@@ -336,7 +336,7 @@ export class JobMatchingAgent {
 
   private async logMatchingSession(userId: string, validMatches: number, totalJobs: number): Promise<void> {
     try {
-      await supabase.from('agent_analytics').insert({
+      const analytics = {
         agent_type: 'job_matching',
         user_id: userId,
         session_data: {
@@ -345,8 +345,12 @@ export class JobMatchingAgent {
           match_rate: totalJobs > 0 ? (validMatches / totalJobs) * 100 : 0,
           model_version: this.modelVersion,
           timestamp: new Date().toISOString()
-        }
-      });
+        },
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('agent_analytics') || '[]');
+      existing.push(analytics);
+      localStorage.setItem('agent_analytics', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to log matching session:', error);
     }

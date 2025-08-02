@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, Job } from "@/types/job";
 
-export interface AgentTask {
+export interface AgentTaskData {
   id: string;
   type: 'job_matching' | 'career_analysis' | 'market_intelligence' | 'application_optimization' | 'skill_development' | 'network_discovery';
   priority: 'low' | 'medium' | 'high' | 'critical';
@@ -24,7 +24,7 @@ export interface AgentCapability {
 export class AgentOrchestrator {
   private static instance: AgentOrchestrator;
   private activeAgents: Map<string, any> = new Map();
-  private taskQueue: AgentTask[] = [];
+  private taskQueue: AgentTaskData[] = [];
   private isProcessing = false;
 
   private constructor() {
@@ -41,23 +41,27 @@ export class AgentOrchestrator {
 
   private async initializeAgents() {
     // Initialize all specialized agents
-    const { JobMatchingAgent } = await import('./JobMatchingAgent');
-    const { CareerAnalysisAgent } = await import('./CareerAnalysisAgent');
-    const { MarketIntelligenceAgent } = await import('./MarketIntelligenceAgent');
-    const { ApplicationOptimizationAgent } = await import('./ApplicationOptimizationAgent');
-    const { SkillDevelopmentAgent } = await import('./SkillDevelopmentAgent');
-    const { NetworkDiscoveryAgent } = await import('./NetworkDiscoveryAgent');
+    try {
+      const { JobMatchingAgent } = await import('./JobMatchingAgent');
+      const { CareerAnalysisAgent } = await import('./CareerAnalysisAgent');
+      const { MarketIntelligenceAgent } = await import('./MarketIntelligenceAgent');
+      const { ApplicationOptimizationAgent } = await import('./ApplicationOptimizationAgent');
+      const { SkillDevelopmentAgent } = await import('./SkillDevelopmentAgent');
+      const { NetworkDiscoveryAgent } = await import('./NetworkDiscoveryAgent');
 
-    this.activeAgents.set('job_matching', new JobMatchingAgent());
-    this.activeAgents.set('career_analysis', new CareerAnalysisAgent());
-    this.activeAgents.set('market_intelligence', new MarketIntelligenceAgent());
-    this.activeAgents.set('application_optimization', new ApplicationOptimizationAgent());
-    this.activeAgents.set('skill_development', new SkillDevelopmentAgent());
-    this.activeAgents.set('network_discovery', new NetworkDiscoveryAgent());
+      this.activeAgents.set('job_matching', new JobMatchingAgent());
+      this.activeAgents.set('career_analysis', new CareerAnalysisAgent());
+      this.activeAgents.set('market_intelligence', new MarketIntelligenceAgent());
+      this.activeAgents.set('application_optimization', new ApplicationOptimizationAgent());
+      this.activeAgents.set('skill_development', new SkillDevelopmentAgent());
+      this.activeAgents.set('network_discovery', new NetworkDiscoveryAgent());
+    } catch (error) {
+      console.error('Failed to initialize agents:', error);
+    }
   }
 
-  async scheduleTask(task: Omit<AgentTask, 'id' | 'status' | 'createdAt'>): Promise<string> {
-    const agentTask: AgentTask = {
+  async scheduleTask(task: Omit<AgentTaskData, 'id' | 'status' | 'createdAt'>): Promise<string> {
+    const agentTask: AgentTaskData = {
       ...task,
       id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       status: 'pending',
@@ -67,13 +71,13 @@ export class AgentOrchestrator {
     // Insert task into priority queue
     this.insertByPriority(agentTask);
     
-    // Log task creation
-    await this.logTask(agentTask);
+    // Store task locally (until database types are updated)
+    this.storeTaskLocally(agentTask);
     
     return agentTask.id;
   }
 
-  private insertByPriority(task: AgentTask) {
+  private insertByPriority(task: AgentTaskData) {
     const priorityOrder = { 'critical': 0, 'high': 1, 'medium': 2, 'low': 3 };
     const insertIndex = this.taskQueue.findIndex(
       existingTask => priorityOrder[task.priority] < priorityOrder[existingTask.priority]
@@ -102,10 +106,10 @@ export class AgentOrchestrator {
     }
   }
 
-  private async processTask(task: AgentTask) {
+  private async processTask(task: AgentTaskData) {
     try {
       task.status = 'in_progress';
-      await this.updateTaskStatus(task);
+      this.updateTaskLocally(task);
 
       const agent = this.activeAgents.get(task.type);
       if (!agent) {
@@ -118,91 +122,102 @@ export class AgentOrchestrator {
       task.completedAt = new Date();
       task.result = result;
       
-      await this.updateTaskStatus(task);
+      this.updateTaskLocally(task);
       await this.notifyTaskCompletion(task);
       
     } catch (error) {
       console.error(`Task ${task.id} failed:`, error);
       task.status = 'failed';
       task.result = { error: error.message };
-      await this.updateTaskStatus(task);
+      this.updateTaskLocally(task);
     }
   }
 
-  private async logTask(task: AgentTask) {
+  private storeTaskLocally(task: AgentTaskData) {
     try {
-      await supabase.from('agent_tasks').insert({
-        id: task.id,
-        type: task.type,
-        priority: task.priority,
-        user_id: task.userId,
-        status: task.status,
-        payload: task.payload,
-        created_at: task.createdAt.toISOString()
+      const tasks = JSON.parse(localStorage.getItem('agent_tasks') || '[]');
+      tasks.push({
+        ...task,
+        createdAt: task.createdAt.toISOString(),
+        completedAt: task.completedAt?.toISOString()
       });
+      localStorage.setItem('agent_tasks', JSON.stringify(tasks));
     } catch (error) {
-      console.error('Failed to log task:', error);
+      console.error('Failed to store task locally:', error);
     }
   }
 
-  private async updateTaskStatus(task: AgentTask) {
+  private updateTaskLocally(task: AgentTaskData) {
     try {
-      await supabase.from('agent_tasks').update({
-        status: task.status,
-        result: task.result,
-        completed_at: task.completedAt?.toISOString()
-      }).eq('id', task.id);
+      const tasks = JSON.parse(localStorage.getItem('agent_tasks') || '[]');
+      const taskIndex = tasks.findIndex((t: any) => t.id === task.id);
+      if (taskIndex !== -1) {
+        tasks[taskIndex] = {
+          ...task,
+          createdAt: task.createdAt.toISOString(),
+          completedAt: task.completedAt?.toISOString()
+        };
+        localStorage.setItem('agent_tasks', JSON.stringify(tasks));
+      }
     } catch (error) {
-      console.error('Failed to update task status:', error);
+      console.error('Failed to update task locally:', error);
     }
   }
 
-  private async notifyTaskCompletion(task: AgentTask) {
-    // Send real-time notification to user
+  private async notifyTaskCompletion(task: AgentTaskData) {
+    // Store notification locally for now
     try {
-      await supabase.from('notifications').insert({
-        user_id: task.userId,
+      const notifications = JSON.parse(localStorage.getItem('agent_notifications') || '[]');
+      notifications.push({
+        id: `notif_${Date.now()}`,
+        userId: task.userId,
         type: 'agent_task_completed',
-        title: `Agent Task Completed`,
+        title: 'Agent Task Completed',
         message: `Your ${task.type.replace('_', ' ')} task has been completed successfully.`,
         metadata: {
           taskId: task.id,
           taskType: task.type,
           result: task.result
-        }
+        },
+        read: false,
+        createdAt: new Date().toISOString()
       });
+      localStorage.setItem('agent_notifications', JSON.stringify(notifications));
     } catch (error) {
-      console.error('Failed to send notification:', error);
+      console.error('Failed to store notification:', error);
     }
   }
 
-  async getTaskStatus(taskId: string): Promise<AgentTask | null> {
+  async getTaskStatus(taskId: string): Promise<AgentTaskData | null> {
     try {
-      const { data, error } = await supabase
-        .from('agent_tasks')
-        .select('*')
-        .eq('id', taskId)
-        .single();
-      
-      if (error) throw error;
-      return data as AgentTask;
+      const tasks = JSON.parse(localStorage.getItem('agent_tasks') || '[]');
+      const task = tasks.find((t: any) => t.id === taskId);
+      if (task) {
+        return {
+          ...task,
+          createdAt: new Date(task.createdAt),
+          completedAt: task.completedAt ? new Date(task.completedAt) : undefined
+        };
+      }
+      return null;
     } catch (error) {
       console.error('Failed to get task status:', error);
       return null;
     }
   }
 
-  async getUserTasks(userId: string, limit = 10): Promise<AgentTask[]> {
+  async getUserTasks(userId: string, limit = 10): Promise<AgentTaskData[]> {
     try {
-      const { data, error } = await supabase
-        .from('agent_tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-      
-      if (error) throw error;
-      return data as AgentTask[];
+      const tasks = JSON.parse(localStorage.getItem('agent_tasks') || '[]');
+      return tasks
+        .filter((t: any) => t.userId === userId)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit)
+        .map((task: any) => ({
+          ...task,
+          createdAt: new Date(task.createdAt),
+          completedAt: task.completedAt ? new Date(task.completedAt) : undefined
+        }));
     } catch (error) {
       console.error('Failed to get user tasks:', error);
       return [];
@@ -252,21 +267,18 @@ export class AgentOrchestrator {
 
   async getSystemMetrics(): Promise<any> {
     try {
-      const { data: tasks, error } = await supabase
-        .from('agent_tasks')
-        .select('*')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-      
-      if (error) throw error;
+      const tasks = JSON.parse(localStorage.getItem('agent_tasks') || '[]');
+      const last24Hours = Date.now() - 24 * 60 * 60 * 1000;
+      const recentTasks = tasks.filter((t: any) => new Date(t.createdAt).getTime() > last24Hours);
 
-      const totalTasks = tasks.length;
-      const completedTasks = tasks.filter(t => t.status === 'completed').length;
-      const failedTasks = tasks.filter(t => t.status === 'failed').length;
-      const avgCompletionTime = tasks
-        .filter(t => t.status === 'completed' && t.completed_at)
-        .reduce((acc, t) => {
-          const start = new Date(t.created_at).getTime();
-          const end = new Date(t.completed_at!).getTime();
+      const totalTasks = recentTasks.length;
+      const completedTasks = recentTasks.filter((t: any) => t.status === 'completed').length;
+      const failedTasks = recentTasks.filter((t: any) => t.status === 'failed').length;
+      const avgCompletionTime = recentTasks
+        .filter((t: any) => t.status === 'completed' && t.completedAt)
+        .reduce((acc: number, t: any) => {
+          const start = new Date(t.createdAt).getTime();
+          const end = new Date(t.completedAt).getTime();
           return acc + (end - start);
         }, 0) / completedTasks || 0;
 
@@ -281,7 +293,15 @@ export class AgentOrchestrator {
       };
     } catch (error) {
       console.error('Failed to get system metrics:', error);
-      return {};
+      return {
+        totalTasks: 0,
+        completedTasks: 0,
+        failedTasks: 0,
+        successRate: 0,
+        avgCompletionTime: 0,
+        activeAgents: this.activeAgents.size,
+        queueLength: this.taskQueue.length
+      };
     }
   }
 }

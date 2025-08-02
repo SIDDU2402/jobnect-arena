@@ -609,11 +609,15 @@ export class MarketIntelligenceAgent {
 
   private async cacheResults(result: MarketIntelligenceResult, payload: any): Promise<void> {
     try {
-      await supabase.from('market_intelligence_cache').upsert({
+      const cacheItem = {
         cache_key: JSON.stringify(payload),
         data: result,
-        expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours
-      });
+        expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('market_intelligence_cache') || '[]');
+      existing.push(cacheItem);
+      localStorage.setItem('market_intelligence_cache', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to cache market intelligence results:', error);
     }

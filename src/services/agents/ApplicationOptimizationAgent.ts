@@ -653,7 +653,7 @@ export class ApplicationOptimizationAgent {
     result: ApplicationOptimizationResult
   ): Promise<void> {
     try {
-      await supabase.from('agent_analytics').insert({
+      const analytics = {
         agent_type: 'application_optimization',
         user_id: userId,
         session_data: {
@@ -662,8 +662,12 @@ export class ApplicationOptimizationAgent {
           optimization_suggestions: result.resumeOptimization.suggestions.length,
           ats_keyword_match: result.optimizedCoverLetter.atsOptimization.keywordMatch,
           timestamp: new Date().toISOString()
-        }
-      });
+        },
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('agent_analytics') || '[]');
+      existing.push(analytics);
+      localStorage.setItem('agent_analytics', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to log optimization session:', error);
     }

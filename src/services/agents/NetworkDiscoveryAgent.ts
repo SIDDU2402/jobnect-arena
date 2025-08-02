@@ -570,7 +570,7 @@ export class NetworkDiscoveryAgent {
 
   private async logNetworkingAnalysis(userId: string, result: NetworkDiscoveryResult): Promise<void> {
     try {
-      await supabase.from('agent_analytics').insert({
+      const analytics = {
         agent_type: 'network_discovery',
         user_id: userId,
         session_data: {
@@ -580,8 +580,12 @@ export class NetworkDiscoveryAgent {
           networking_events: result.networkingEvents.length,
           warm_introductions: result.warmIntroductions.length,
           timestamp: new Date().toISOString()
-        }
-      });
+        },
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('agent_analytics') || '[]');
+      existing.push(analytics);
+      localStorage.setItem('agent_analytics', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to log networking analysis:', error);
     }

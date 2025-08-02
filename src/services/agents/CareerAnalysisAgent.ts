@@ -452,7 +452,7 @@ export class CareerAnalysisAgent {
 
   private async logAnalysis(userId: string, result: CareerAnalysisResult): Promise<void> {
     try {
-      await supabase.from('agent_analytics').insert({
+      const analytics = {
         agent_type: 'career_analysis',
         user_id: userId,
         session_data: {
@@ -462,8 +462,12 @@ export class CareerAnalysisAgent {
           recommendations_count: result.recommendations.length,
           market_percentile: result.marketPosition.percentile,
           timestamp: new Date().toISOString()
-        }
-      });
+        },
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('agent_analytics') || '[]');
+      existing.push(analytics);
+      localStorage.setItem('agent_analytics', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to log career analysis:', error);
     }

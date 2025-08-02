@@ -742,7 +742,7 @@ export class SkillDevelopmentAgent {
 
   private async logDevelopmentPlan(userId: string, result: SkillDevelopmentResult): Promise<void> {
     try {
-      await supabase.from('agent_analytics').insert({
+      const analytics = {
         agent_type: 'skill_development',
         user_id: userId,
         session_data: {
@@ -751,8 +751,12 @@ export class SkillDevelopmentAgent {
           certifications_recommended: result.certificationRecommendations.length,
           practice_projects_count: result.practiceOpportunities.projects.length,
           timestamp: new Date().toISOString()
-        }
-      });
+        },
+        timestamp: new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('agent_analytics') || '[]');
+      existing.push(analytics);
+      localStorage.setItem('agent_analytics', JSON.stringify(existing));
     } catch (error) {
       console.error('Failed to log skill development plan:', error);
     }
