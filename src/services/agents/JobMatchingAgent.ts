@@ -141,12 +141,45 @@ export class JobMatchingAgent {
   }
 
   private async calculateSkillsMatch(job: Job, userProfile: UserProfile, resumeText: string): Promise<number> {
+    try {
+      // Use Gemini AI for real-time semantic analysis
+      const prompt = `Analyze the skill match between this job and candidate profile.
+      
+      Job: ${job.title}
+      Job Requirements: ${job.requirements}
+      Job Description: ${job.description.substring(0, 500)}
+      
+      Candidate Skills: ${userProfile.skills?.join(', ') || 'No skills listed'}
+      Resume Extract: ${resumeText.substring(0, 800)}
+      
+      Return a JSON object with:
+      {
+        "matchScore": (0-1 decimal representing overall skill alignment),
+        "keyMatches": ["matched skill 1", "matched skill 2"],
+        "gaps": ["missing skill 1", "missing skill 2"],
+        "transferableSkills": ["skill that could transfer"]
+      }`;
+
+      const { data: geminiResponse } = await supabase.functions.invoke('gemini-ai', {
+        body: {
+          prompt,
+          agentType: 'jobMatching',
+          context: 'Skills matching analysis',
+          temperature: 0.3,
+          maxTokens: 1000
+        }
+      });
+
+      if (geminiResponse?.success && geminiResponse.result?.matchScore) {
+        return Math.min(1.0, Math.max(0.0, geminiResponse.result.matchScore));
+      }
+    } catch (error) {
+      console.error('Gemini skills analysis failed, using fallback:', error);
+    }
+
+    // Fallback to original algorithm
     const jobText = `${job.title} ${job.description} ${job.requirements}`;
-    
-    // Advanced semantic similarity
     const semanticScore = calculateCosineSimilarity(resumeText, jobText);
-    
-    // Skill keywords matching with weights
     const requiredSkills = this.extractWeightedSkills(job.requirements);
     const userSkills = userProfile.skills || [];
     
@@ -166,8 +199,6 @@ export class JobMatchingAgent {
     });
     
     const weightedSkillScore = totalWeight > 0 ? skillMatchScore / totalWeight : 0;
-    
-    // Combine semantic and weighted skill scores
     return (semanticScore * 0.4) + (weightedSkillScore * 0.6);
   }
 

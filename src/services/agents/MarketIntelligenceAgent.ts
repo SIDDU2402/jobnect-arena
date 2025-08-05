@@ -175,13 +175,76 @@ export class MarketIntelligenceAgent {
   }
 
   private async analyzeIndustryTrends(jobsData: any[], recentTrends: any): Promise<MarketIntelligenceResult['industryTrends']> {
-    // Extract skills from job postings
+    try {
+      // Use Gemini AI for intelligent market analysis
+      const jobSample = jobsData.slice(0, 50).map(job => ({
+        title: job.title,
+        requirements: job.requirements.substring(0, 200),
+        salary: job.salary,
+        location: job.location
+      }));
+
+      const prompt = `Analyze current job market trends and provide comprehensive market intelligence.
+      
+      Job Market Sample (${jobsData.length} total jobs):
+      ${JSON.stringify(jobSample, null, 2)}
+      
+      Analyze the market and return a JSON object with:
+      {
+        "growingSkills": [
+          {
+            "skill": "skill name",
+            "growthRate": 0-100,
+            "demandScore": 0-100,
+            "averageSalary": "$XXX,XXX",
+            "marketProjection": "excellent|good|stable|declining"
+          }
+        ],
+        "decliningSkills": [
+          {
+            "skill": "skill name",
+            "declineRate": 0-100,
+            "reason": "automation|outdated|replaced by X"
+          }
+        ],
+        "emergingRoles": [
+          {
+            "title": "role title",
+            "description": "role description",
+            "requiredSkills": ["skill1", "skill2"],
+            "salaryRange": "$XX,XXX - $XXX,XXX",
+            "growthProjection": 0-100
+          }
+        ],
+        "keyInsights": ["insight 1", "insight 2"]
+      }`;
+
+      const { data: geminiResponse } = await supabase.functions.invoke('gemini-ai', {
+        body: {
+          prompt,
+          agentType: 'marketIntelligence',
+          context: 'Job market trends analysis',
+          temperature: 0.3,
+          maxTokens: 2000
+        }
+      });
+
+      if (geminiResponse?.success && geminiResponse.result) {
+        const result = geminiResponse.result;
+        return {
+          growingSkills: result.growingSkills || [],
+          decliningSkills: result.decliningSkills || [],
+          emergingRoles: result.emergingRoles || []
+        };
+      }
+    } catch (error) {
+      console.error('Gemini market analysis failed, using fallback:', error);
+    }
+
+    // Fallback to original algorithm
     const skillsData = this.extractSkillsFromJobs(jobsData);
-    
-    // Compare skill demand across time periods
     const skillTrends = this.calculateSkillTrends(recentTrends);
     
-    // Identify growing skills
     const growingSkills = skillTrends
       .filter(skill => skill.growthRate > 10)
       .sort((a, b) => b.growthRate - a.growthRate)
@@ -193,7 +256,6 @@ export class MarketIntelligenceAgent {
         averageSalary: skill.averageSalary
       }));
 
-    // Identify declining skills
     const decliningSkills = skillTrends
       .filter(skill => skill.growthRate < -10)
       .sort((a, b) => a.growthRate - b.growthRate)
@@ -204,7 +266,6 @@ export class MarketIntelligenceAgent {
         reason: this.getDeclineReason(skill.name)
       }));
 
-    // Identify emerging roles
     const emergingRoles = this.identifyEmergingRoles(jobsData);
 
     return {

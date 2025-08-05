@@ -176,9 +176,50 @@ export class CareerAnalysisAgent {
     resumeText: string, 
     targetRole?: string
   ): Promise<CareerAnalysisResult['skillGaps']> {
+    try {
+      // Use Gemini AI for intelligent skill gap analysis
+      const prompt = `Analyze skill gaps for career advancement.
+      
+      Current Skills: ${userProfile.skills?.join(', ') || 'No skills listed'}
+      Resume Summary: ${resumeText.substring(0, 1000)}
+      Target Role: ${targetRole || 'General career advancement'}
+      Current Level: ${this.analyzeCareerLevel(resumeText, userProfile)}
+      
+      Based on current job market trends and the user's career goals, identify skill gaps and return a JSON object:
+      {
+        "skillGaps": [
+          {
+            "skill": "skill name",
+            "importance": "high|medium|low",
+            "marketDemand": 0-100,
+            "learningPath": ["step 1", "step 2", "step 3"],
+            "timeToLearn": "weeks/months",
+            "certifications": ["cert 1", "cert 2"]
+          }
+        ],
+        "emergingSkills": ["new skill 1", "new skill 2"],
+        "industryTrends": ["trend 1", "trend 2"]
+      }`;
+
+      const { data: geminiResponse } = await supabase.functions.invoke('gemini-ai', {
+        body: {
+          prompt,
+          agentType: 'careerAnalysis',
+          context: 'Skill gap analysis for career development',
+          temperature: 0.4,
+          maxTokens: 1500
+        }
+      });
+
+      if (geminiResponse?.success && geminiResponse.result?.skillGaps) {
+        return geminiResponse.result.skillGaps.slice(0, 10); // Limit to top 10
+      }
+    } catch (error) {
+      console.error('Gemini skill gap analysis failed, using fallback:', error);
+    }
+
+    // Fallback to original algorithm
     const userSkills = (userProfile.skills || []).map(s => s.toLowerCase());
-    
-    // Get trending skills from job market
     const { data: recentJobs } = await supabase
       .from('jobs')
       .select('requirements, title')
@@ -188,7 +229,6 @@ export class CareerAnalysisAgent {
 
     if (!recentJobs) return [];
 
-    // Extract required skills from job postings
     const skillFrequency: Record<string, number> = {};
     const commonSkills = [
       'python', 'javascript', 'react', 'node.js', 'aws', 'docker', 'kubernetes',
@@ -205,7 +245,6 @@ export class CareerAnalysisAgent {
       });
     });
 
-    // Find missing high-demand skills
     const skillGaps = Object.entries(skillFrequency)
       .filter(([skill]) => !userSkills.includes(skill))
       .sort((a, b) => b[1] - a[1])
