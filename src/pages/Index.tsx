@@ -1,6 +1,6 @@
 
 import { NavBar } from "@/components/NavBar";
-import { Hero } from "@/components/Hero";
+import { Hero3D } from "@/components/hero/Hero3D";
 import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const Index = () => {
       <NavBar />
       
       <main className="flex-1">
-        <Hero />
+        <Hero3D />
         <Features />
         
         {/* How It Works Section */}
