@@ -120,6 +120,47 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
     setIsApplyFormOpen(true);
   };
 
+  const handleApplicationSubmit = async (
+    coverLetter: string,
+    resumeUrl: string | null,
+    resumeText: string
+  ) => {
+    try {
+      if (!selectedJob || !profile?.id) {
+        toast({
+          title: "Unable to submit",
+          description: "Missing job or profile information.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("applications").insert({
+        job_id: selectedJob.id,
+        applicant_id: profile.id,
+        cover_letter: coverLetter,
+        resume_url: resumeUrl,
+        status: "pending",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Application submitted",
+        description: "Your application was sent successfully.",
+      });
+
+      setIsApplyFormOpen(false);
+      setSelectedJob(null);
+    } catch (err: any) {
+      console.error("Error submitting application:", err);
+      toast({
+        title: "Submission failed",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="space-y-6">
       {/* AI Status Panel */}
@@ -529,6 +570,11 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
       {selectedJob && isApplyFormOpen && (
         <ApplyForm
           job={selectedJob}
+          onClose={() => {
+            setIsApplyFormOpen(false);
+            setSelectedJob(null);
+          }}
+          onSubmit={handleApplicationSubmit}
         />
       )}
     </div>
