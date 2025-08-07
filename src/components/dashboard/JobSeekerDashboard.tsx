@@ -29,6 +29,7 @@ import { AgentOrchestrator } from "@/services/agents/AgentOrchestrator";
 import { JobMatch, AIJobAgent } from "@/services/AIJobAgent";
 import ApplyForm from "./ApplyForm";
 import { Job } from "@/types/job";
+import ApplicationsList from "@/components/dashboard/applications/ApplicationsList";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -45,6 +46,21 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
   const [agentMetrics, setAgentMetrics] = useState<any>({});
 
   const orchestrator = AgentOrchestrator.getInstance();
+
+  const { data: myApplications, isLoading: myAppsLoading } = useQuery({
+    queryKey: ['myApplications', user?.id],
+    queryFn: async () => {
+      if (!user) return [] as any[];
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*, job:jobs(*)')
+        .eq('applicant_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   // Fetch agent tasks and metrics
   useEffect(() => {
@@ -234,9 +250,10 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="jobs">AI Matches</TabsTrigger>
+              <TabsTrigger value="applications">Applications</TabsTrigger>
               <TabsTrigger value="agents">AI Agents</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -428,9 +445,21 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="agents" className="space-y-6">
+              <TabsContent value="applications" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Applications</CardTitle>
+                    <CardDescription>Track applications and statuses</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ApplicationsList applications={(myApplications as any) || []} isLoading={!!myAppsLoading} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="agents" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Agent Tasks */}
                 <Card>
@@ -562,7 +591,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
         
         {/* AI Insights Sidebar */}
         <div className="lg:col-span-1">
-          <AIInsights />
+          <AIInsights userProfile={profile} onManualApply={handleJobApply} onNavigateTab={setActiveTab} />
         </div>
       </div>
 
