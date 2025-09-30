@@ -255,7 +255,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="jobs">AI Matches</TabsTrigger>
               <TabsTrigger value="applications">Applications</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
             </TabsList>
 
@@ -533,23 +533,7 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Analytics</CardTitle>
-                  <CardDescription>
-                    Insights powered by AI analysis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Analytics Coming Soon</h3>
-                    <p className="text-muted-foreground">
-                      Comprehensive career analytics will be available here
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <AIAnalyticsTab userProfile={profile} />
             </TabsContent>
 
             <TabsContent value="profile" className="space-y-6">

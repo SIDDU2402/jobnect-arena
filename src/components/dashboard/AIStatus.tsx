@@ -24,16 +24,17 @@ export function AIStatus({ userProfile }: AIStatusProps) {
 
   const checkAIStatus = async () => {
     try {
-      // Test Gemini AI connection
-      const { data } = await supabase.functions.invoke('gemini-ai', {
+      // Test Lovable AI connection
+      const { data } = await supabase.functions.invoke('ai-career-advisor', {
         body: {
           prompt: 'Test connection',
+          context: 'Health check',
           agentType: 'general',
-          maxTokens: 10
+          userProfile: { test: true }
         }
       });
       
-      if (data?.success) {
+      if (data?.analysis || data?.success !== false) {
         setAiStatus('ready');
         setLastUpdate(new Date());
       } else {
@@ -333,7 +334,7 @@ export function AIStatus({ userProfile }: AIStatusProps) {
         {aiStatus !== 'ready' && (
           <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-sm text-amber-700">
-              AI agents are currently offline. Please check your Gemini API configuration.
+              AI agents are currently offline. Please check your Lovable AI configuration.
             </p>
           </div>
         )}
