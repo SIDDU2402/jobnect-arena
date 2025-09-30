@@ -49,65 +49,10 @@ export function AIStatus({ userProfile }: AIStatusProps) {
     setActiveAgents(prev => [...prev, agentType]);
     
     try {
-      let prompt = '';
-      let context = '';
-
-      switch (agentType) {
-        case 'jobMatching':
-          prompt = 'Analyze current job market for real-time job matching opportunities';
-          context = `User skills: ${userProfile?.skills?.join(', ') || 'No skills listed'}`;
-          break;
-        case 'careerAnalysis':
-          prompt = 'Provide career analysis and growth recommendations';
-          context = `Professional summary: ${userProfile?.professional_summary || 'No summary available'}`;
-          break;
-        case 'marketIntelligence':
-          prompt = 'Analyze current job market trends and opportunities';
-          context = 'Real-time market intelligence analysis';
-          break;
-        case 'skillDevelopment':
-          prompt = 'Recommend skill development paths based on market demands';
-          context = `Current skills: ${userProfile?.skills?.join(', ') || 'No skills listed'}`;
-          break;
-        case 'networkDiscovery':
-          prompt = 'Analyze professional networking opportunities';
-          context = 'Professional network analysis and recommendations';
-          break;
-        case 'applicationOptimization':
-          prompt = 'Optimize job application strategy and materials';
-          context = 'Application optimization and success prediction';
-          break;
-        default:
-          prompt = 'General AI assistance for career development';
-      }
-
-      const { data } = await supabase.functions.invoke('gemini-ai', {
-        body: {
-          prompt,
-          context,
-          agentType,
-          temperature: 0.7,
-          maxTokens: 1500
-        }
-      });
-
-      if (data?.success) {
-        toast({
-          title: "AI Agent Activated",
-          description: `${agentType} agent is now providing real-time insights`,
-        });
-        
-        // Store AI response for dashboard display
-        const agentData = {
-          type: agentType,
-          result: data.result,
-          timestamp: new Date().toISOString(),
-          userId: userProfile?.id
-        };
-        
-        const existing = JSON.parse(localStorage.getItem('ai_agent_results') || '[]');
-        existing.unshift(agentData);
-        localStorage.setItem('ai_agent_results', JSON.stringify(existing.slice(0, 50)));
+      if (agentType === 'jobMatching') {
+        await handleJobMatchingAgent();
+      } else {
+        await handleGeneralAgent(agentType);
       }
     } catch (error) {
       console.error(`Failed to activate ${agentType} agent:`, error);
@@ -118,6 +63,167 @@ export function AIStatus({ userProfile }: AIStatusProps) {
       });
     } finally {
       setActiveAgents(prev => prev.filter(a => a !== agentType));
+    }
+  };
+
+  const handleJobMatchingAgent = async () => {
+    if (!userProfile) {
+      toast({ title: 'Profile Required', description: 'Complete your profile first', variant: 'destructive' });
+      return;
+    }
+
+    // Get resume text first
+    let resumeText = '';
+    try {
+      if (userProfile.resume_url) {
+        const { data: resumeData } = await supabase.functions.invoke('extract-resume-text', {
+          body: { resumeUrl: userProfile.resume_url }
+        });
+        resumeText = resumeData?.text || '';
+      }
+    } catch (e) {
+      console.error('Failed to extract resume text', e);
+    }
+
+    // Use Lovable AI for intelligent job matching
+    const { data, error } = await supabase.functions.invoke('ai-job-matching', {
+      body: {
+        userProfile,
+        resumeText,
+        analysisType: 'comprehensive'
+      }
+    });
+
+    if (error) throw error;
+
+    if (data?.matches && data.matches.length > 0) {
+      // Auto-apply to top 3 matches
+      const topMatches = data.matches.slice(0, 3);
+      let successfulApplications = 0;
+
+      for (const match of topMatches) {
+        try {
+          // Generate cover letter with Lovable AI
+          const { data: coverData } = await supabase.functions.invoke('generate-cover-letter', {
+            body: {
+              jobDescription: `${match.job.description}\n\nRequirements:\n${match.job.requirements}`,
+              userProfile,
+              resumeText,
+              jobTitle: match.job.title,
+              company: match.job.company,
+              enhanced: true
+            }
+          });
+
+          // Submit application
+          const { error: appError } = await supabase.from('applications').insert({
+            job_id: match.job.id,
+            applicant_id: userProfile.id,
+            cover_letter: coverData?.coverLetter || '',
+            resume_url: userProfile.resume_url,
+            status: 'pending',
+            auto_applied: true,
+            ats_score: Math.round(match.score)
+          });
+
+          if (!appError) {
+            successfulApplications++;
+          }
+        } catch (e) {
+          console.error('Failed to auto-apply:', e);
+        }
+      }
+
+      // Store comprehensive results
+      const agentData = {
+        type: 'jobMatching',
+        result: {
+          totalMatches: data.matches.length,
+          autoApplications: successfulApplications,
+          topMatches: topMatches.map(m => ({
+            title: m.job.title,
+            company: m.job.company,
+            score: m.score,
+            reasons: m.reasons
+          })),
+          analytics: data.analytics,
+          recommendations: data.recommendations
+        },
+        timestamp: new Date().toISOString(),
+        userId: userProfile.id
+      };
+
+      const existing = JSON.parse(localStorage.getItem('ai_agent_results') || '[]');
+      existing.unshift(agentData);
+      localStorage.setItem('ai_agent_results', JSON.stringify(existing.slice(0, 50)));
+
+      toast({
+        title: "Job Matching Complete",
+        description: `Found ${data.matches.length} matches, auto-applied to ${successfulApplications} jobs`,
+      });
+    } else {
+      toast({
+        title: "No Matches Found",
+        description: "Update your profile and skills for better matches",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGeneralAgent = async (agentType: string) => {
+    let prompt = '';
+    let context = '';
+
+    switch (agentType) {
+      case 'careerAnalysis':
+        prompt = 'Provide comprehensive career analysis and growth recommendations based on current market trends';
+        context = `User profile: ${JSON.stringify(userProfile)}, Skills: ${userProfile?.skills?.join(', ') || 'No skills listed'}`;
+        break;
+      case 'marketIntelligence':
+        prompt = 'Analyze current job market trends, salary ranges, and high-demand skills';
+        context = 'Real-time market intelligence analysis for career planning';
+        break;
+      case 'skillDevelopment':
+        prompt = 'Recommend skill development paths and learning resources based on market demands';
+        context = `Current skills: ${userProfile?.skills?.join(', ') || 'No skills listed'}`;
+        break;
+      case 'networkDiscovery':
+        prompt = 'Analyze professional networking opportunities and strategies';
+        context = 'Professional network analysis and growth recommendations';
+        break;
+      case 'applicationOptimization':
+        prompt = 'Optimize job application strategy, resume, and interview preparation';
+        context = 'Application optimization and success prediction analysis';
+        break;
+      default:
+        prompt = 'General AI assistance for career development';
+    }
+
+    const { data } = await supabase.functions.invoke('ai-career-advisor', {
+      body: {
+        prompt,
+        context,
+        agentType,
+        userProfile
+      }
+    });
+
+    if (data?.analysis) {
+      toast({
+        title: "AI Analysis Complete",
+        description: `${agentType} insights generated successfully`,
+      });
+      
+      const agentData = {
+        type: agentType,
+        result: data.analysis,
+        timestamp: new Date().toISOString(),
+        userId: userProfile?.id
+      };
+      
+      const existing = JSON.parse(localStorage.getItem('ai_agent_results') || '[]');
+      existing.unshift(agentData);
+      localStorage.setItem('ai_agent_results', JSON.stringify(existing.slice(0, 50)));
     }
   };
 

@@ -53,3 +53,9 @@ verify_jwt = true
 [functions.extract-resume-text]
 verify_jwt = true
 
+[functions.ai-job-matching]
+verify_jwt = false
+
+[functions.ai-career-advisor]
+verify_jwt = false
+

@@ -30,6 +30,7 @@ import { JobMatch, AIJobAgent } from "@/services/AIJobAgent";
 import ApplyForm from "./ApplyForm";
 import { Job } from "@/types/job";
 import ApplicationsList from "@/components/dashboard/applications/ApplicationsList";
+import { AIAnalyticsTab } from "./tabs/AIAnalyticsTab";
 
 interface JobSeekerDashboardProps {
   profile: any;
@@ -250,11 +251,10 @@ const JobSeekerDashboard = ({ profile }: JobSeekerDashboardProps) => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="jobs">AI Matches</TabsTrigger>
               <TabsTrigger value="applications">Applications</TabsTrigger>
-              <TabsTrigger value="agents">AI Agents</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
             </TabsList>
