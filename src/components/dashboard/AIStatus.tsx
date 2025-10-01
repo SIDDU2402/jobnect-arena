@@ -98,13 +98,19 @@ export function AIStatus({ userProfile }: AIStatusProps) {
     if (error) throw error;
 
     if (data?.matches && data.matches.length > 0) {
-      // Auto-apply to top 3 matches
-      const topMatches = data.matches.slice(0, 3);
+      // Sort by score and confidence, take top 3
+      const topMatches = data.matches
+        .sort((a: any, b: any) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (b.confidence || 0) - (a.confidence || 0);
+        })
+        .slice(0, 3);
       let successfulApplications = 0;
+      const applicationDetails: any[] = [];
 
       for (const match of topMatches) {
         try {
-          // Generate cover letter with Lovable AI
+          // Generate enhanced cover letter highlighting matched skills
           const { data: coverData } = await supabase.functions.invoke('generate-cover-letter', {
             body: {
               jobDescription: `${match.job.description}\n\nRequirements:\n${match.job.requirements}`,
@@ -116,19 +122,33 @@ export function AIStatus({ userProfile }: AIStatusProps) {
             }
           });
 
-          // Submit application
+          // Submit application with enhanced metadata
           const { error: appError } = await supabase.from('applications').insert({
             job_id: match.job.id,
             applicant_id: userProfile.id,
-            cover_letter: coverData?.coverLetter || '',
+            cover_letter: coverData?.coverLetter || `Dear Hiring Manager,\n\nI am excited to apply for the ${match.job.title} position. My skills align well with your requirements.\n\nBest regards,\n${userProfile.first_name}`,
             resume_url: userProfile.resume_url,
             status: 'pending',
             auto_applied: true,
-            ats_score: Math.round(match.score)
+            ats_score: Math.round(match.skillsMatch || match.score),
+            application_metadata: {
+              ai_match_score: match.score,
+              skills_match: match.skillsMatch,
+              experience_match: match.experienceMatch,
+              matched_skills: match.matchedSkills || [],
+              confidence: match.confidence,
+              applied_at: new Date().toISOString()
+            }
           });
 
           if (!appError) {
             successfulApplications++;
+            applicationDetails.push({
+              company: match.job.company,
+              title: match.job.title,
+              score: match.score,
+              confidence: match.confidence
+            });
           }
         } catch (e) {
           console.error('Failed to auto-apply:', e);
@@ -141,12 +161,10 @@ export function AIStatus({ userProfile }: AIStatusProps) {
         result: {
           totalMatches: data.matches.length,
           autoApplications: successfulApplications,
-          topMatches: topMatches.map(m => ({
-            title: m.job.title,
-            company: m.job.company,
-            score: m.score,
-            reasons: m.reasons
-          })),
+          applications: applicationDetails,
+          averageScore: Math.round(data.matches.reduce((sum: number, m: any) => sum + m.score, 0) / data.matches.length),
+          topSkills: data.analytics?.topSkillsInDemand || [],
+          competitiveness: data.analytics?.competitivenessRating || 'Unknown',
           analytics: data.analytics,
           recommendations: data.recommendations
         },
@@ -158,9 +176,14 @@ export function AIStatus({ userProfile }: AIStatusProps) {
       existing.unshift(agentData);
       localStorage.setItem('ai_agent_results', JSON.stringify(existing.slice(0, 50)));
 
+      // Show detailed results
+      const topApp = applicationDetails[0];
       toast({
-        title: "Job Matching Complete",
-        description: `Found ${data.matches.length} matches, auto-applied to ${successfulApplications} jobs`,
+        title: "🎯 Advanced Job Matching Complete!",
+        description: successfulApplications > 0 
+          ? `Applied to ${successfulApplications} positions! Top: ${topApp?.company} (${topApp?.score}% fit, ${topApp?.confidence}% confidence)`
+          : `Found ${data.matches.length} quality matches. Review in AI Matches tab.`,
+        duration: 6000
       });
     } else {
       toast({

@@ -56,7 +56,9 @@ serve(async (req) => {
       });
     }
 
-    // Use Lovable AI for intelligent job matching
+    console.log(`Analyzing ${availableJobs.length} jobs for ${userProfile.first_name}`);
+
+    // Enhanced AI prompt with advanced matching criteria
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -68,66 +70,102 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert AI job matching agent. Analyze the candidate profile and available jobs to find the best matches. Return a JSON response with:
-            {
-              "matches": [
-                {
-                  "job": { job object },
-                  "score": number (0-100),
-                  "reasons": ["reason1", "reason2"],
-                  "skillsMatch": number (0-100),
-                  "experienceMatch": number (0-100),
-                  "cultureFit": number (0-100)
-                }
-              ],
-              "analytics": {
-                "totalJobsAnalyzed": number,
-                "averageMatchScore": number,
-                "topSkillsInDemand": ["skill1", "skill2"],
-                "marketTrends": "brief analysis"
-              },
-              "recommendations": {
-                "profileImprovements": ["suggestion1", "suggestion2"],
-                "skillsToLearn": ["skill1", "skill2"],
-                "careerAdvice": "brief advice"
-              }
-            }
-            
-            Scoring criteria:
-            - Skills alignment with job requirements (35%)
-            - Experience level match (25%)
-            - Industry/company culture fit (20%)
-            - Location preferences (10%)
-            - Career growth potential (10%)
-            
-            Only include matches with score >= 70.`
+            content: `You are an expert AI career advisor and job matching specialist with deep knowledge in:
+- Technical skill analysis and semantic matching
+- Transferable skills identification
+- Career trajectory assessment
+- Industry trends and market intelligence
+- ATS (Applicant Tracking System) optimization
+
+Your task is to perform advanced job matching using multi-factor analysis:
+
+SCORING METHODOLOGY (Total: 100 points):
+1. Skills Alignment (40 points):
+   - Direct skill matches: Exact matches get full points
+   - Semantic matches: Related/synonym skills get 80% points
+   - Transferable skills: Adjacent skills get 60% points
+   - Weight by importance: "Required" > "Preferred" > "Nice to have"
+   
+2. Experience Level (25 points):
+   - Years of experience vs. job requirements
+   - Seniority level alignment (Junior/Mid/Senior/Lead)
+   - Industry-specific experience
+   
+3. Technical Depth (15 points):
+   - Expertise level in key technologies
+   - Breadth vs. depth of skills
+   - Recent vs. outdated technologies
+   
+4. Culture & Growth Fit (10 points):
+   - Company culture indicators
+   - Career advancement opportunities
+   - Learning and development potential
+   
+5. Practical Factors (10 points):
+   - Location/remote compatibility
+   - Salary range alignment
+   - Job type (full-time, contract, etc.)
+
+ANALYSIS REQUIREMENTS:
+- Identify not just keyword matches, but semantic relationships
+- Recognize skill synonyms (e.g., JS = JavaScript = ECMAScript)
+- Detect transferable skills (e.g., React experience → Vue.js potential)
+- Consider skill recency and market demand
+- Evaluate experience quality, not just quantity
+- Only return matches with score >= 60 (good fit threshold)`
           },
           {
             role: 'user',
             content: `
-CANDIDATE PROFILE:
-Name: ${userProfile.first_name} ${userProfile.last_name}
-Skills: ${userProfile.skills?.join(', ') || 'Not specified'}
-Professional Summary: ${userProfile.professional_summary || 'Not provided'}
-Experience: ${resumeText ? 'Resume provided' : 'No resume'}
+🎯 CANDIDATE PROFILE ANALYSIS:
 
-RESUME TEXT:
-${resumeText.substring(0, 2000)}
+BASIC INFO:
+• Name: ${userProfile.first_name} ${userProfile.last_name}
+• Role: ${userProfile.role || 'Not specified'}
 
-AVAILABLE JOBS (${availableJobs.length} total):
+SKILLS INVENTORY (${userProfile.skills?.length || 0} skills):
+${userProfile.skills?.length > 0 ? userProfile.skills.map((skill, i) => `${i + 1}. ${skill}`).join('\n') : '• No skills listed'}
+
+PROFESSIONAL SUMMARY:
+${userProfile.professional_summary || 'Not provided - this will lower match confidence'}
+
+COMPLETE RESUME CONTENT:
+${resumeText || 'No resume provided - matching will be limited to profile data only'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 AVAILABLE JOB OPPORTUNITIES (${availableJobs.length} positions):
+
 ${availableJobs.map((job, index) => `
-JOB ${index + 1}:
-ID: ${job.id}
-Title: ${job.title}
-Company: ${job.company}
-Location: ${job.location}
-Type: ${job.type}
-Salary: ${job.salary}
-Description: ${job.description.substring(0, 300)}...
-Requirements: ${job.requirements.substring(0, 300)}...
-`).join('\n')}
+═══════ JOB #${index + 1} ═══════
+🆔 Job ID: ${job.id}
+💼 Position: ${job.title}
+🏢 Company: ${job.company}
+📍 Location: ${job.location}
+💰 Compensation: ${job.salary}
+⏰ Type: ${job.type}
 
-Analyze each job and provide comprehensive matching results.`
+📝 FULL JOB DESCRIPTION:
+${job.description}
+
+✅ COMPLETE REQUIREMENTS LIST:
+${job.requirements}
+
+`).join('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTRUCTIONS:
+1. Analyze EACH job thoroughly against the candidate profile
+2. Use semantic matching for skills (recognize synonyms and related technologies)
+3. Identify transferable skills that aren't exact matches but indicate adaptability
+4. Consider experience level and seniority alignment
+5. Evaluate career growth potential based on job description language
+6. Generate specific, actionable reasons for each match
+7. Identify critical skill gaps that could be addressed with training
+8. Provide strategic career advice based on market analysis
+
+Return comprehensive matching results using the function call.`
           }
         ],
         tools: [
@@ -135,43 +173,127 @@ Analyze each job and provide comprehensive matching results.`
             type: "function",
             function: {
               name: "analyze_job_matches",
-              description: "Analyze job matches for the candidate",
+              description: "Perform advanced multi-factor job matching analysis",
               parameters: {
                 type: "object",
                 properties: {
                   matches: {
                     type: "array",
+                    description: "Only include matches with score >= 60",
                     items: {
                       type: "object",
                       properties: {
-                        job: { type: "object" },
-                        score: { type: "number", minimum: 0, maximum: 100 },
-                        reasons: { type: "array", items: { type: "string" } },
-                        skillsMatch: { type: "number", minimum: 0, maximum: 100 },
-                        experienceMatch: { type: "number", minimum: 0, maximum: 100 },
-                        cultureFit: { type: "number", minimum: 0, maximum: 100 }
+                        job: { 
+                          type: "object",
+                          description: "The complete job object"
+                        },
+                        score: { 
+                          type: "number", 
+                          minimum: 60, 
+                          maximum: 100,
+                          description: "Overall match score (only include if >= 60)"
+                        },
+                        reasons: { 
+                          type: "array", 
+                          items: { type: "string" },
+                          description: "Specific reasons why this is a good match (3-5 reasons)"
+                        },
+                        skillsMatch: { 
+                          type: "number", 
+                          minimum: 0, 
+                          maximum: 100,
+                          description: "Skills alignment score with semantic matching"
+                        },
+                        experienceMatch: { 
+                          type: "number", 
+                          minimum: 0, 
+                          maximum: 100,
+                          description: "Experience level match score"
+                        },
+                        cultureFit: { 
+                          type: "number", 
+                          minimum: 0, 
+                          maximum: 100,
+                          description: "Company culture and growth fit score"
+                        },
+                        matchedSkills: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "List of key skills that match (5-10 skills)"
+                        },
+                        skillGaps: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Critical missing skills (3-5 skills)"
+                        },
+                        transferableSkills: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Skills that can transfer to this role (2-4 skills)"
+                        },
+                        careerGrowth: {
+                          type: "number",
+                          minimum: 0,
+                          maximum: 100,
+                          description: "Career advancement potential score"
+                        },
+                        confidence: {
+                          type: "number",
+                          minimum: 0,
+                          maximum: 100,
+                          description: "Confidence level in this match based on data quality"
+                        }
                       },
-                      required: ["job", "score", "reasons", "skillsMatch", "experienceMatch", "cultureFit"]
+                      required: ["job", "score", "reasons", "skillsMatch", "experienceMatch", "cultureFit", "matchedSkills", "skillGaps", "careerGrowth", "confidence"]
                     }
                   },
                   analytics: {
                     type: "object",
                     properties: {
                       totalJobsAnalyzed: { type: "number" },
+                      qualityMatchesFound: { type: "number", description: "Matches with score >= 60" },
                       averageMatchScore: { type: "number" },
-                      topSkillsInDemand: { type: "array", items: { type: "string" } },
-                      marketTrends: { type: "string" }
+                      topSkillsInDemand: { 
+                        type: "array", 
+                        items: { type: "string" },
+                        description: "5-10 most in-demand skills across all jobs"
+                      },
+                      marketTrends: { 
+                        type: "string",
+                        description: "2-3 sentence analysis of current job market trends"
+                      },
+                      competitivenessRating: {
+                        type: "string",
+                        enum: ["Highly Competitive", "Competitive", "Moderate", "Needs Improvement"],
+                        description: "Overall competitiveness assessment"
+                      }
                     },
-                    required: ["totalJobsAnalyzed", "averageMatchScore", "topSkillsInDemand", "marketTrends"]
+                    required: ["totalJobsAnalyzed", "qualityMatchesFound", "averageMatchScore", "topSkillsInDemand", "marketTrends", "competitivenessRating"]
                   },
                   recommendations: {
                     type: "object",
                     properties: {
-                      profileImprovements: { type: "array", items: { type: "string" } },
-                      skillsToLearn: { type: "array", items: { type: "string" } },
-                      careerAdvice: { type: "string" }
+                      profileImprovements: { 
+                        type: "array", 
+                        items: { type: "string" },
+                        description: "3-5 specific ways to improve the profile"
+                      },
+                      skillsToLearn: { 
+                        type: "array", 
+                        items: { type: "string" },
+                        description: "5-8 high-impact skills to learn based on market demand"
+                      },
+                      careerAdvice: { 
+                        type: "string",
+                        description: "3-4 sentences of strategic career guidance"
+                      },
+                      immediateActions: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "3-4 actionable steps to take right now"
+                      }
                     },
-                    required: ["profileImprovements", "skillsToLearn", "careerAdvice"]
+                    required: ["profileImprovements", "skillsToLearn", "careerAdvice", "immediateActions"]
                   }
                 },
                 required: ["matches", "analytics", "recommendations"]
@@ -184,25 +306,32 @@ Analyze each job and provide comprehensive matching results.`
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Lovable AI API error:', errorText);
       throw new Error(`Lovable AI API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
+    console.log('AI Response received');
+    
     const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall?.function?.arguments) {
-      throw new Error('Invalid AI response format');
+      console.error('Invalid AI response format:', JSON.stringify(aiResponse));
+      throw new Error('Invalid AI response format - no tool call found');
     }
 
     const analysisResult = JSON.parse(toolCall.function.arguments);
 
-    // Map job IDs back to full job objects
+    // Ensure job objects are complete
     const enrichedMatches = analysisResult.matches.map((match: any) => ({
       ...match,
       job: availableJobs.find(job => job.id === match.job.id) || match.job
     }));
 
-    // Log analytics to database
+    console.log(`Found ${enrichedMatches.length} quality matches (score >= 60)`);
+
+    // Log detailed analytics to database
     try {
       await supabase.from('agent_analytics').insert({
         agent_type: 'job_matching',
@@ -211,6 +340,8 @@ Analyze each job and provide comprehensive matching results.`
           total_jobs_analyzed: availableJobs.length,
           matches_found: enrichedMatches.length,
           average_score: analysisResult.analytics.averageMatchScore,
+          top_skills_demand: analysisResult.analytics.topSkillsInDemand,
+          competitiveness: analysisResult.analytics.competitivenessRating,
           analysis_type: analysisType,
           timestamp: new Date().toISOString()
         }
@@ -232,7 +363,8 @@ Analyze each job and provide comprehensive matching results.`
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error',
       matches: [],
-      analytics: null
+      analytics: null,
+      recommendations: null
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
